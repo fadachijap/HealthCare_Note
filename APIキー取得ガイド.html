@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIのAPIキー取得ガイド</title>
+<style>
+@page{size:A4;margin:16mm 15mm 16mm}
+:root{--ink:#1d2a33;--sub:#56646e;--line:#cfd8dd;--accent:#0f6e6e;--soft:#e6f2f1}
+*{box-sizing:border-box}
+html{background:#e9eef0}
+body{font-family:"Yu Gothic","Yu Gothic UI","Meiryo","Hiragino Sans","Noto Sans CJK JP",sans-serif;color:var(--ink);font-size:10.5pt;line-height:1.75;margin:0}
+.page{background:#fff;max-width:210mm;margin:18px auto;padding:16mm 15mm;box-shadow:0 1px 8px rgba(0,0,0,.12)}
+.toolbar{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:8px 16px;display:flex;gap:14px;align-items:center;font-size:10pt}
+.toolbar button{font:inherit;font-weight:700;background:#fff;color:var(--accent);border:0;border-radius:5px;padding:7px 16px;cursor:pointer}
+.cover{border-bottom:3px solid var(--accent);padding-bottom:10mm;margin-bottom:8mm}
+.cover .kind{color:var(--accent);font-weight:700;letter-spacing:.2em;font-size:10pt}
+.cover h1{font-size:24pt;line-height:1.3;margin:4mm 0 2mm}
+.cover .sub{font-size:12pt;color:var(--sub)}
+.cover table{margin-top:8mm;width:auto}
+h2{font-size:15pt;color:#fff;background:var(--accent);padding:2mm 4mm;margin:10mm 0 4mm;border-radius:3px}
+h3{font-size:12pt;border-left:5px solid var(--accent);padding-left:3mm;margin:7mm 0 2mm}
+h4{font-size:10.5pt;margin:5mm 0 1mm;color:var(--accent)}
+p{margin:1.5mm 0}
+ul,ol{margin:1.5mm 0;padding-left:6mm}
+li{margin:.6mm 0}
+table{border-collapse:collapse;width:100%;margin:2.5mm 0;font-size:9.5pt}
+th,td{border:1px solid var(--line);padding:1.2mm 2mm;vertical-align:top;text-align:left}
+th{background:#eaf0f2;font-weight:700;white-space:nowrap}
+tr{break-inside:avoid}
+code,pre{font-family:Consolas,"MS Gothic",monospace;font-size:9pt}
+code{background:#eef2f4;padding:0 1mm;border-radius:2px;overflow-wrap:anywhere}
+pre{background:#f3f6f7;border:1px solid var(--line);border-radius:3px;padding:2.5mm 3mm;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;break-inside:avoid}
+figure{margin:3mm 0 4mm;break-inside:avoid}
+figure img{width:100%;border:1px solid var(--line);border-radius:3px;display:block}
+figcaption{font-size:9pt;color:var(--sub);margin-top:1mm}
+.note{background:var(--soft);border-left:4px solid var(--accent);padding:2mm 3mm;margin:3mm 0;break-inside:avoid}
+.warn{background:#fff4d6;border-left:4px solid #c98a00;padding:2mm 3mm;margin:3mm 0;break-inside:avoid}
+.btn{display:inline-block;border:1px solid #9fb0b9;border-radius:3px;padding:0 1.5mm;font-size:9.5pt;background:#f7f9fa;white-space:nowrap}
+.toc{columns:2;column-gap:10mm;font-size:10pt}
+.toc a{color:var(--ink);text-decoration:none}
+.toc .l1{font-weight:700;margin-top:1.5mm;break-inside:avoid}
+.toc .l2{padding-left:5mm}
+.flow{display:flex;gap:2mm;align-items:stretch;margin:3mm 0;break-inside:avoid}
+.flow div{flex:1;border:1px solid var(--accent);border-radius:3px;padding:2mm;font-size:9pt;background:var(--soft);text-align:center}
+.flow span{align-self:center;color:var(--accent);font-weight:700}
+.hi{background:#fde4df;color:#a8321d;font-weight:700;padding:0 1mm}.lo{background:#e0ebfb;color:#1f4f9c;font-weight:700;padding:0 1mm}
+@media print{
+ html{background:#fff}.toolbar{display:none}
+ .page{margin:0;padding:0;box-shadow:none;max-width:none}
+ h2{break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ h2.brk{break-before:page}
+ h3,h4{break-after:avoid}
+ th,.note,.warn,.flow div,.hi,.lo,code,pre{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ a{color:inherit;text-decoration:none}
+}
+</style>
+<style>.step{counter-reset:s;list-style:none;padding-left:0}.step>li{counter-increment:s;position:relative;padding:1.5mm 0 1.5mm 11mm;border-bottom:1px dotted var(--line);break-inside:avoid}
+.step>li::before{content:counter(s);position:absolute;left:0;top:1.5mm;width:7mm;height:7mm;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;text-align:center;line-height:7mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.url{font-family:Consolas,monospace;font-weight:700;color:var(--accent)}
+@media(max-width:640px){.page{padding:5mm}.toolbar span{display:none}table{font-size:8.5pt}}</style>
+</head><body>
+<div class="toolbar"><button onclick="window.print()">PDFで保存 / 印刷</button><span>印刷画面の送信先で「PDFに保存」を選ぶとPDFファイルになります（A4縦）。</span></div>
+<div class="page">
+<div class="cover">
+  <div class="kind">はじめての方へ</div>
+  <h1>AIのAPIキー取得ガイド</h1>
+  <div class="sub">「特定健診ノート（健康ノート）」でAIに相談するための準備</div>
+  <p style="margin-top:5mm;color:var(--sub)">2026年11月11日時点の情報です。各社の画面や料金は変わることがあります。画面の表示が違うときは、同じ意味のボタンを探してください。</p>
+</div>
+
+<h2>1. APIキーとは</h2>
+<p>APIキーは、アプリがあなたの代わりにAIへ問い合わせるための「合い鍵」です。長い英数字の文字列で、AIの会社のサイトで発行します。発行したキーをアプリの「⚙ 設定」画面に1回貼り付ければ、あとはアプリからAIに相談できます。パソコンとスマホの両方で使う場合は、同じキーをそれぞれに貼り付けます。</p>
+<div class="note">3社すべてのキーを取る必要はありません。<b>どれか1つ</b>あればアプリは使えます。</div>
+
+<h2>2. どのAIを選ぶか</h2>
+<table>
+<tr><th>AI</th><th>必要なもの</th><th>費用</th><th>こんな方に</th></tr>
+<tr><td><b>Gemini</b>（Google）</td><td>Googleアカウント</td><td>無料枠あり（カード登録なしで始められる）</td><td>まず試したい方。<b>最初の1つとしておすすめ</b></td></tr>
+<tr><td><b>Claude</b>（Anthropic）</td><td>メールアドレス、クレジットカード</td><td>前払い制（5ドルから）。使った分だけ残高から引かれる</td><td>Googleアカウントがない方、回答を読み比べたい方</td></tr>
+<tr><td><b>ChatGPT</b>（OpenAI）</td><td>メールアドレス、クレジットカード</td><td>前払い制（5ドルから）。使った分だけ残高から引かれる</td><td>同上</td></tr>
+</table>
+<div class="warn"><b>ChatGPTやClaudeの月額プランとは別のものです。</b>チャット画面の有料プラン（月額制）に入っていても、APIキーの利用料は含まれません。APIは開発者向けの別サイトで、別に支払います。</div>
+<h4>費用の目安</h4>
+<p>健診データや毎日の記録の相談は文章量が少ないため、1回（医師4人分）で数円から数十円程度です。前払いの5ドルで、年に数回の相談なら長く使えます。正確な料金は各社の料金ページで確認してください。</p>
+<h4>健診データの扱いについて</h4>
+<p>Geminiの無料枠では、送った内容がGoogleのサービス改善に使われることがあります。気になる方は、有料の設定に切り替えるか、ClaudeまたはChatGPTを選んでください。アプリは相談のとき氏名を送りませんが、健診票や薬の写真を読み取るときは、写真に印字された氏名なども送られます。</p>
+
+<h2>3. Gemini（Google）のキーを取る</h2>
+<p>所要時間：約5分。用意するもの：Googleアカウント（Gmailのアドレス）。</p>
+<ol class="step">
+<li>ブラウザで <span class="url">https://aistudio.google.com/apikey</span> を開きます。</li>
+<li>Googleアカウントでログインします。初回は利用規約の同意画面が出るので、内容を確認して同意します。</li>
+<li><span class="btn">Create API key</span>（APIキーを作成）を押します。</li>
+<li>プロジェクトを選ぶ画面が出たら、そのまま新しいプロジェクトで作成します（名前は初期値のままで構いません）。</li>
+<li>キー（長い英数字）が表示されます。<span class="btn">Copy</span>（コピー）を押します。</li>
+<li>特定健診ノート（開くと「健康ノート」と表示されます）を開き、右上の「⚙ 設定」→「AIのキー」の Gemini の欄にキーを貼り付けて、<span class="btn">保存して確かめる</span> を押します。「使えます」と出れば完了です。</li>
+</ol>
+<div class="note">無料枠には1分あたり・1日あたりの回数制限があります。「429」や「上限に達しました」と出たら、少し待ってからもう一度試してください。</div>
+
+<h2>4. Claude（Anthropic）のキーを取る</h2>
+<p>所要時間：約10分。用意するもの：メールアドレス、クレジットカード。</p>
+<ol class="step">
+<li>ブラウザで <span class="url">https://platform.claude.com</span> を開きます（以前の console.anthropic.com からも同じ場所に移動します）。</li>
+<li>メールアドレスまたはGoogleアカウントで登録します。メールに届く確認の案内に従います。</li>
+<li>氏名などの質問に答えます。利用目的を聞かれたら「個人（Individual）」で構いません。</li>
+<li><span class="btn">Billing</span>（請求）を開き、クレジットカードを登録して利用分（クレジット）を購入します。最低額は5ドルです。</li>
+<li><span class="btn">API keys</span> を開き、<span class="btn">Create key</span> を押します。名前は「健診ノート」など分かるものにします。</li>
+<li>キー（<code>sk-ant-</code> で始まる文字列）が表示されます。<b>この画面でしか表示されない</b>ので、すぐにコピーします。</li>
+<li>特定健診ノート（開くと「健康ノート」と表示されます）を開き、右上の「⚙ 設定」→「AIのキー」の Claude の欄にキーを貼り付けて、<span class="btn">保存して確かめる</span> を押します。「使えます」と出れば完了です。</li>
+</ol>
+<div class="note">使いすぎが心配な方は、<span class="btn">Limits</span> で月ごとの上限額（Spend limit）を設定できます。自動で追加購入する設定（Auto reload）はオフのままにしておくと、残高以上は使われません。</div>
+
+<h2>5. ChatGPT（OpenAI）のキーを取る</h2>
+<p>所要時間：約10分。用意するもの：メールアドレス、クレジットカード、携帯電話（確認コードの受信用）。</p>
+<ol class="step">
+<li>ブラウザで <span class="url">https://platform.openai.com</span> を開きます。ChatGPTのチャット画面（chatgpt.com）とは別のサイトです。</li>
+<li>登録またはログインします。ChatGPTと同じアカウントが使えます。</li>
+<li>右上の歯車（Settings）から <span class="btn">Billing</span>（請求）を開き、クレジットカードを登録して利用分を購入します。最低額は5ドルです。</li>
+<li><span class="btn">API keys</span> を開き、<span class="btn">Create new secret key</span> を押します。名前を付けて作成します。</li>
+<li>キー（<code>sk-</code> で始まる文字列）が表示されます。<b>この画面でしか表示されない</b>ので、すぐにコピーします。</li>
+<li>特定健診ノート（開くと「健康ノート」と表示されます）を開き、右上の「⚙ 設定」→「AIのキー」の ChatGPT の欄にキーを貼り付けて、<span class="btn">保存して確かめる</span> を押します。「使えます」と出れば完了です。</li>
+</ol>
+<div class="note">自動で追加購入する設定（Auto recharge）はオフのままにしておくと、残高以上は使われません。</div>
+
+<h2>6. キーを安全に扱う</h2>
+<ul>
+<li><b>キーは他人に教えない。</b>メール、LINE、SNS、写真で送らないでください。知られると、あなたの料金で使われるおそれがあります。</li>
+<li>キーを控えておく場合は、パスワードと同じ場所（パスワード管理アプリや紙のメモ）に保管します。</li>
+<li>家族や他人と共用のパソコン・スマホには入力しないでください。</li>
+<li>知られたかもしれないと思ったら、各社のAPIキーの画面でそのキーを削除（Delete / Revoke）し、新しいキーを作り直します。</li>
+<li>パソコンやスマホを手放すときは、アプリの「⚙ 設定」→「すべて消す」でキーを消してください。</li>
+</ul>
+
+<h2>7. うまくいかないとき</h2>
+<table>
+<tr><th>症状</th><th>確認すること</th></tr>
+<tr><td>キーを貼ったのに「キーが正しくありません」（401）</td><td>コピーのときに前後の空白や文字の欠けがないか。別のAIの欄に貼っていないか</td></tr>
+<tr><td>「残高がありません」「クレジット不足」（Claude / ChatGPT）</td><td>キーの作成だけでは使えません。Billing で利用分を購入したか確認します</td></tr>
+<tr><td>「回数の上限です」（429）</td><td>少し待ってからやり直します。Geminiの無料枠では起こりやすくなります</td></tr>
+<tr><td>キーをコピーし忘れて画面を閉じた</td><td>同じキーはもう表示できません。新しいキーを作り直します（古いキーは削除）</td></tr>
+<tr><td>「Create API key」が押せない（Gemini）</td><td>会社や学校のGoogleアカウントでは制限されることがあります。個人のGoogleアカウントで試します</td></tr>
+<tr><td>ChatGPTの有料プランに入っているのに使えない</td><td>APIは別払いです。platform.openai.com の Billing で購入が必要です</td></tr>
+</table>
+
+<h3>参考にした情報</h3>
+<ul style="font-size:9pt">
+<li>Gemini APIキーの取得方法（株式会社一創、2026年10月）https://www.issoh.co.jp/tech/details/18858/</li>
+<li>Geminiを無料で使う方法（Apidog）https://apidog.com/jp/blog/how-to-use-gemini-for-free/</li>
+<li>Claude Consoleの使い方（Uravation、2026年8月）https://uravation.com/media/claude-console-guide-2026/</li>
+<li>Claude APIキーの取得方法（APIsRouter、2026年7月）https://apisrouter.com/ja/claude-api-key-guide</li>
+<li>初めてのOpenAI APIキー発行ガイド（hatenabase）https://hatenabase.jp/blog/openai-api-key-first-time-guide/</li>
+<li>OpenAI APIキーを無料で取得する方法（AIREITER、2026年9月）https://aireiter.com/ja/blog/how-to-get-openai-api-key-for-free</li>
+</ul>
+</div></body></html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f6e6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="健康ノート">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>健康ノート</title>
+<style>
+:root{--ink:#1d2a33;--sub:#56646e;--line:#d0d9de;--bg:#f3f6f7;--card:#fff;--accent:#0f6e6e;--accent-soft:#e2f1f0;
+--hi:#fde4df;--hi-ink:#a8321d;--lo:#e0ebfb;--lo-ink:#1f4f9c;--warn:#7a4f00;--warn-bg:#fff4d6;--fs:17px}
+*{box-sizing:border-box}
+html{font-size:var(--fs)}
+body{margin:0;font-family:"Yu Gothic UI","Meiryo","Hiragino Sans","Noto Sans JP",sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;-webkit-text-size-adjust:100%}
+header{background:var(--accent);color:#fff;padding:.5rem .9rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+header h1{font-size:1.15rem;margin:0 auto 0 0;font-weight:700}
+header select{font-size:1rem;max-width:11rem}
+#cloud{font-size:.8rem;opacity:.95}
+nav{display:flex;background:#0b5858;position:sticky;top:0;z-index:20}
+nav button{flex:1;background:none;border:0;color:#cfe6e5;padding:.7rem .2rem;font-size:.95rem;cursor:pointer;border-bottom:4px solid transparent;font-family:inherit;line-height:1.3}
+nav button.on{color:#fff;border-bottom-color:#ffd166;font-weight:700;background:#0f6e6e}
+main{padding:.9rem .9rem 5rem;max-width:1400px;margin:0 auto}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;margin-bottom:.9rem}
+.card h2{font-size:1.1rem;margin:0 0 .5rem}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+label{font-size:.9rem;color:var(--sub);max-width:100%}
+.row>label{min-width:0}
+label select{max-width:100%}
+input,select,textarea,button{font-family:inherit;font-size:1rem}
+input[type=text],input[type=password],input[type=date],select,textarea{border:1.5px solid #9fb0b9;border-radius:7px;padding:.45rem .6rem;background:#fff;color:var(--ink);max-width:100%}
+textarea{width:100%;resize:vertical}
+.btn{background:#fff;border:1.5px solid #8fa3ad;border-radius:8px;padding:.5rem .9rem;cursor:pointer;color:var(--ink);min-height:2.6rem}
+.btn:hover{background:#eef3f5}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.primary:hover{background:#0b5858}
+.big{padding:.75rem 1.3rem;font-size:1.1rem;min-height:3.2rem}
+.danger{color:var(--hi-ink);border-color:#d9a79d}
+button:disabled{opacity:.5;cursor:default}
+.link{background:none;border:0;color:var(--accent);cursor:pointer;padding:.1rem .25rem;font-size:.9rem;text-decoration:underline}
+.muted{color:var(--sub);font-size:.9rem}
+.msg{padding:.6rem .8rem;border-radius:8px;margin:.5rem 0}
+.msg.ok{background:var(--accent-soft);color:#0b4f4f}.msg.err{background:var(--hi);color:var(--hi-ink)}.msg.warn{background:var(--warn-bg);color:var(--warn)}
+#flash{position:sticky;top:3rem;z-index:15}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.data{border-collapse:separate;border-spacing:0;font-size:.95rem}
+table.data th,table.data td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:.2rem .45rem;white-space:nowrap;background:#fff}
+table.data thead th{background:#eaf0f2;font-weight:700;text-align:center;border-top:1px solid var(--line)}
+table.data .name{position:sticky;left:0;z-index:2;border-left:1px solid var(--line);min-width:9rem;max-width:13rem;white-space:normal;text-align:left}
+table.data thead .name{z-index:3}
+table.data tr.grp td{background:#dfeceb;font-weight:700;color:#0b4f4f;font-size:.85rem;position:sticky;left:0}
+table.data td.ref{color:var(--sub);font-size:.85rem}
+table.data td.val{padding:0;text-align:right}
+table.data td.val input{width:4.9rem;border:0;border-radius:0;text-align:right;padding:.4rem .45rem;background:transparent;font-variant-numeric:tabular-nums;font-size:1rem}
+table.data td.val.H{background:var(--hi)}table.data td.val.H input{color:var(--hi-ink);font-weight:700}
+table.data td.val.L{background:var(--lo)}table.data td.val.L input{color:var(--lo-ink);font-weight:700}
+table.data td.txt{padding:0;white-space:normal;min-width:9rem}
+table.data td.txt textarea{border:0;border-radius:0;min-height:3.2rem;font-size:.9rem;background:transparent}
+.legend span{display:inline-block;padding:0 .5rem;border-radius:4px;margin-right:.3rem;font-size:.8rem}
+.docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem}
+.docgrid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.doc{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:10px;padding:.8rem .9rem;min-width:0}
+.doc h3{margin:0 0 .2rem;font-size:1.1rem}
+.doc .focus{font-size:.82rem;color:var(--sub)}
+.doc.d1{border-top-color:#7a4fb5}.doc.d2{border-top-color:#1f6fb5}.doc.d3{border-top-color:#c27a00}
+.answer{overflow-wrap:anywhere}
+.answer h2,.answer h3,.answer h4{font-size:1.02rem;margin:.9rem 0 .25rem;padding-bottom:.1rem;border-bottom:1px solid var(--line)}
+.answer h4{border:0}
+.answer p{margin:.35rem 0}.answer ul,.answer ol{margin:.25rem 0;padding-left:1.3rem}
+.answer table{border-collapse:collapse;font-size:.9rem;margin:.4rem 0}.answer th,.answer td{border:1px solid var(--line);padding:.1rem .4rem}
+.answer code{background:#eef2f4;padding:0 .2rem;border-radius:3px}
+.meta{font-size:.8rem;color:var(--sub);background:#f5f8f9;border-radius:6px;padding:.4rem .5rem;margin:.5rem 0}
+.thumbs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0}
+.thumb{border:1px solid var(--line);border-radius:8px;padding:.3rem;background:#fff;font-size:.8rem;width:8rem;text-align:center;overflow-wrap:anywhere}
+.thumb img{width:100%;height:7rem;object-fit:cover;object-position:top;border-radius:5px;display:block}
+dialog{border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;max-width:760px;width:94vw;color:var(--ink)}
+dialog::backdrop{background:rgba(20,35,40,.45)}
+.spin{display:inline-block;width:1rem;height:1rem;border:3px solid #b9c4cb;border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-.15rem;margin-right:.35rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pill{display:inline-block;font-size:.8rem;border-radius:1rem;padding:.05rem .6rem;background:#e8edf0;color:var(--sub)}
+.pill.ok{background:var(--accent-soft);color:#0b4f4f}.pill.ng{background:var(--hi);color:var(--hi-ink)}
+.diff td{background:var(--warn-bg)!important}
+.steps{list-style:none;padding:0;margin:0}
+.steps li{display:flex;gap:.6rem;align-items:center;padding:.45rem 0;border-bottom:1px dotted var(--line)}
+.steps .n{width:2rem;height:2rem;border-radius:50%;background:#c9d3d8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.steps .done .n{background:var(--accent)}
+.steps .t{flex:1}
+.keyrow{display:grid;grid-template-columns:9.5rem 1fr auto auto;gap:.5rem;align-items:center;margin:.4rem 0}
+details{margin-top:.5rem}summary{cursor:pointer;color:var(--accent);font-weight:700;padding:.3rem 0}
+.printhead{display:none}
+@media(max-width:900px){
+ .docgrid,.docgrid.two{grid-template-columns:1fr}
+ .wide{display:none}
+ table.data .name{min-width:7.5rem;max-width:8.5rem}
+ table.data td.val input{width:4.3rem}
+ #roundSel{width:100%}
+ nav{position:fixed;top:auto;bottom:0;left:0;right:0}
+ nav button{border-bottom:0;border-top:4px solid transparent;font-size:.8rem;padding:.55rem .1rem}
+ nav button.on{border-top-color:#ffd166}
+ #flash{top:.3rem}
+ .keyrow{grid-template-columns:1fr auto}.keyrow>span:first-child{grid-column:1/-1;font-weight:700}
+ header h1{font-size:1rem}
+}
+@media print{
+ header,nav,.noprint,button,#flash{display:none!important}
+ html{font-size:10px}body{background:#fff}main{padding:0;max-width:none}
+ .card,.doc{border:0;padding:0;margin:0 0 10px}.printhead{display:block;font-size:15px;font-weight:700;margin-bottom:6px}
+ table.data td.val input{width:50px;padding:1px 3px;font-size:10px}table.data th,table.data td{padding:1px 3px;font-size:10px}
+ table.data .name,table.data tr.grp td{position:static}
+ .wide{display:table-cell}
+ .docgrid,.docgrid.two{display:block}.doc{border-top:2px solid #333;padding-top:6px;margin-bottom:14px}
+ .doc.hideprint{display:none}.scroll{overflow:visible}
+ td.H,td.L,.diff td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+#modebar{display:flex;background:#0b5858;padding:.35rem .5rem 0;gap:.4rem}
+#modebar button{flex:1;border:0;border-radius:10px 10px 0 0;padding:.55rem .3rem;font-size:1rem;font-family:inherit;background:#0a4a4a;color:#bfdcda;cursor:pointer}
+#modebar button b{font-size:1.1rem}
+#modebar button.on{background:var(--bg);color:var(--accent)}
+nav{background:var(--bg);border-bottom:2px solid var(--line)}
+nav button{color:var(--sub);border-bottom:4px solid transparent}
+nav button.on{color:var(--accent);background:#fff;border-bottom-color:var(--accent)}
+.card h3{font-size:1rem;margin:.9rem 0 .3rem;padding-left:.5rem;border-left:5px solid var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:.45rem}
+.chip{border:1.5px solid #8fa3ad;border-radius:2rem;background:#fff;color:var(--ink);padding:.4rem .9rem;cursor:pointer;min-height:2.5rem}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.chip.on::before{content:"✓ "}
+.taglist{display:flex;flex-wrap:wrap;gap:.4rem;min-height:2rem;align-items:center}
+.tag{background:var(--accent-soft);color:#0b4f4f;border-radius:8px;padding:.25rem .3rem .25rem .7rem;display:inline-flex;align-items:center;gap:.3rem}
+.tag button{border:0;background:none;color:#0b4f4f;font-size:1.2rem;cursor:pointer;padding:0 .4rem;line-height:1}
+#dayStrip{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem;margin-top:.7rem}
+#dayStrip button{border:1.5px solid #8fa3ad;border-radius:10px;background:#fff;color:var(--ink);padding:.35rem 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.3;min-width:0}
+#dayStrip button b{font-size:1.1rem}#dayStrip button span{font-size:.8rem;color:var(--sub)}#dayStrip button i{font-style:normal;color:var(--accent);height:1rem;font-size:.7rem}
+#dayStrip button.today{border-color:#c98a00;border-width:2.5px}
+#dayStrip button.on{background:var(--accent);border-color:var(--accent);color:#fff}#dayStrip button.on span,#dayStrip button.on i{color:#fff}
+#dayStrip button:nth-child(6) b{color:#1f4f9c}#dayStrip button:nth-child(7) b{color:#a8321d}#dayStrip button.on b{color:#fff}
+.slot{display:flex;flex-wrap:wrap;gap:.4rem .7rem;align-items:center;padding:.45rem 0;border-bottom:1px dotted var(--line)}
+.slot>b{width:3.6rem;flex:none}
+.slot .num{width:4.2rem;text-align:right}
+.slot .grow{flex:1;min-width:11rem}
+.slot input[type=time]{width:7.2rem}
+table.data td.ck{padding:.15rem;text-align:center}
+table.data td.ck button{width:2.6rem;height:2.4rem;border:1.5px solid #8fa3ad;border-radius:8px;background:#fff;font-size:1.3rem;font-weight:700;color:#fff;cursor:pointer}
+table.data td.ck button.on{background:var(--accent);border-color:var(--accent)}
+table.data td.c{text-align:center}
+table.data td.hi{background:var(--hi);color:var(--hi-ink);font-weight:700}
+table.data td.wrap{white-space:normal;min-width:6.5rem;font-size:.85rem;vertical-align:top}
+#weekTable,#habitCard table{width:100%}
+table.plain{border-collapse:collapse}table.plain th{text-align:left;padding:.35rem .8rem .35rem 0;font-weight:700;white-space:nowrap;vertical-align:middle}table.plain td{padding:.35rem 0}
+.legend2{display:flex;flex-wrap:wrap;gap:.2rem 1rem;font-size:.85rem;color:var(--sub);margin:.2rem 0}
+.legend2 i{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;border:2px solid;margin-right:.3rem;vertical-align:-.05rem}
+.hbar{display:grid;grid-template-columns:9rem 1fr 3.5rem;gap:.6rem;align-items:center;margin:.35rem 0}
+.hbar div{background:#e8edf0;border-radius:6px;height:1.1rem;overflow:hidden}.hbar i{display:block;height:100%;background:var(--accent)}
+.hbar b{text-align:right}
+@media(max-width:900px){
+ #modebar button{font-size:.85rem}#modebar button b{font-size:.95rem;display:block}
+ nav{background:#0b5858;border:0}nav button{color:#cfe6e5}nav button.on{color:#fff;background:#0f6e6e;border-top-color:#ffd166}
+ .slot>b{width:100%}
+ #weekTable .name,#habitCard .name{min-width:5.2rem;max-width:6rem}
+ table.plain th{display:block}table.plain td{display:block}
+}
+@media print{ #modebar{display:none!important} #graphs .card{break-inside:avoid} .hbar i,.legend2 i{-webkit-print-color-adjust:exact;print-color-adjust:exact} table.data td.ck button{border:0;color:#000;background:none!important} td.hi{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
+</style>
+</head>
+<body>
+<header>
+  <h1>健康ノート</h1>
+  <select id="person" aria-label="対象者"></select>
+  <span id="cloud"></span>
+  <button class="btn" id="gear" style="min-height:2.2rem;padding:.25rem .7rem">⚙ 設定</button>
+</header>
+<div id="modebar">
+  <button data-mode="yearly">年1回の<b>特定健診</b></button>
+  <button data-mode="daily">毎日の<b>健康記録</b></button>
+</div>
+<nav id="nav"></nav>
+<main>
+<div id="flash"></div>
+
+<!-- ============ 特定健診 ============ -->
+<section id="tab-y-data">
+  <div class="printhead" id="dataPrintHead"></div>
+  <div class="card noprint" id="guideCard"></div>
+  <div class="card noprint">
+    <div class="row">
+      <label>お名前（通称・イニシャルでも可） <input type="text" id="pName" style="width:9rem"></label>
+      <label>生まれた年 <select id="pYear"></select></label>
+      <label>月 <select id="pMonth"></select></label>
+      <label>性別 <select id="pSex"><option>男性</option><option>女性</option></select></label>
+      <button class="btn" id="savePerson">保存</button>
+      <button class="link" id="addPerson">＋ 家族を追加</button>
+      <button class="link" id="delPerson">この人を削除</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row noprint" style="margin-bottom:.6rem">
+      <button class="btn primary" id="saveData">変更を保存</button>
+      <button class="btn" id="addCheckup">＋ 健診の回を追加</button>
+      <button class="btn" id="addItem">＋ 検査項目を追加</button>
+      <button class="btn" onclick="window.print()">印刷</button>
+      <span id="dirty" class="pill ng" style="display:none">まだ保存していません</span>
+    </div>
+    <div id="dataEmpty"></div>
+    <div class="scroll"><table class="data" id="dataTable"></table></div>
+    <p class="muted noprint"><span class="legend"><span style="background:var(--hi);color:var(--hi-ink)">基準値より高い</span><span style="background:var(--lo);color:var(--lo-ink)">基準値より低い</span></span>
+    新しい順に10回分まで表示します。数字は直接書き直せます。項目名を押すと説明とグラフが出ます。</p>
+  </div>
+</section>
+
+<section id="tab-y-import">
+  <div class="card">
+    <h2>健診票をAIに読み取ってもらう</h2>
+    <p>健診結果の紙を写真に撮るか、スキャンした画像を選びます。AIが数字を読み取り、確認してから保存します。</p>
+    <div class="row">
+      <button class="btn primary big" id="pickBtn">写真・画像を選ぶ</button>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" multiple style="display:none">
+      <span class="muted ainote"></span>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="row">
+      <button class="btn primary big" id="extractBtn" style="display:none">読み取りを始める</button>
+      <span id="extractState"></span>
+    </div>
+    <p class="muted">写真は紙全体が入るように、明るい場所で真上から撮ってください。画像はAIの会社に送られます（紙に印字された氏名なども含まれます）。</p>
+  </div>
+  <div id="review"></div>
+</section>
+
+<!-- ============ 健康状態（共通） ============ -->
+<section id="tab-health">
+  <div class="card">
+    <h2>いま、かかっている病気</h2>
+    <p class="muted">あてはまるものを押して選びます（もう一度押すと外れます）。</p>
+    <div class="chips" id="condChips"></div>
+    <div class="row" style="margin-top:.5rem"><label style="flex:1">そのほかの病気・気になる症状<br><input type="text" id="condOther" style="width:100%" placeholder="例：逆流性食道炎、ひざの痛み"></label></div>
+  </div>
+  <div class="card">
+    <h2>飲んでいる薬</h2>
+    <div class="taglist" id="medList"></div>
+    <div class="row" style="margin-top:.5rem">
+      <input type="text" id="medInput" placeholder="薬の名前" style="flex:1;min-width:10rem">
+      <button class="btn" id="medAdd">追加</button>
+      <button class="btn primary" id="medPhoto">📷 薬の写真から読み取る</button>
+      <input type="file" id="medFile" accept="image/*" capture="environment" style="display:none">
+    </div>
+    <p class="muted" id="medState">薬の箱・シート・薬の袋・お薬手帳を撮ると、AIが薬の名前を読み取ります。</p>
+  </div>
+  <div class="card">
+    <h2>健康のために行っていること</h2>
+    <div class="taglist" id="habitList"></div>
+    <div class="row" style="margin-top:.5rem">
+      <select id="habitSel"></select>
+      <input type="text" id="habitOther" placeholder="自分で入力" style="display:none;width:10rem">
+      <button class="btn" id="habitAdd">追加</button>
+    </div>
+    <p class="muted">ここに入れたものは、「毎日の健康記録」で行った日に ✓ を付けられます。</p>
+  </div>
+  <div class="row"><button class="btn primary big" id="healthSave">この内容で保存する</button><span class="muted">ここの内容は、AIに相談するときに一緒に伝えます。</span></div>
+</section>
+
+<!-- ============ AIに相談（特定健診） ============ -->
+<section id="tab-y-ask">
+  <div class="card noprint">
+    <h2>特に今気になる点</h2>
+    <textarea id="yConcern" rows="4" placeholder="例：最近おなかが張る。血圧とコレステロールが毎年高めで、薬を飲まずに下げる方法を知りたい。"></textarea>
+    <div class="row" style="margin-top:.6rem">
+      <button class="btn primary big" id="yAskAll">4人の先生全員に聞く</button>
+      <label><input type="checkbox" id="yUsePrev" checked> 前回の回答も踏まえて聞く</label>
+    </div>
+    <p class="muted"><span class="ainote"></span>　健診データ・健康状態・上の内容をAIに送ります。お名前は送りません。</p>
+  </div>
+  <div class="docgrid two" id="yAskGrid"></div>
+</section>
+<section id="tab-y-compare">
+  <div class="card noprint"><div class="row">
+    <label>相談した日で揃える <select id="yRoundSel"></select></label>
+    <label class="wide">並べ方 <select id="yLayoutSel"><option value="4">横に4列</option><option value="2">2列×2段</option></select></label>
+    <button class="btn" onclick="window.print()">印刷</button>
+  </div></div>
+  <div class="printhead" id="yPrintHead"></div>
+  <div class="docgrid" id="yCompareGrid"></div>
+</section>
+
+<!-- ============ 毎日の健康記録 ============ -->
+<section id="tab-d-week">
+  <div class="printhead" id="weekPrintHead"></div>
+  <div class="card">
+    <div class="row noprint" style="justify-content:space-between">
+      <button class="btn" id="wPrev">◀ 前の週</button>
+      <b id="weekLabel" style="font-size:1.1rem"></b>
+      <span><button class="btn" id="wToday">今週</button> <button class="btn" id="wNext">次の週 ▶</button></span>
+    </div>
+    <div id="dayStrip" class="noprint"></div>
+  </div>
+  <div class="noprint" id="dayForm"></div>
+  <div class="card" id="habitCard"></div>
+  <div class="card">
+    <h2>1週間のまとめ</h2>
+    <div class="scroll"><table class="data" id="weekTable"></table></div>
+    <p class="muted noprint">家庭で測った血圧が 135／85 以上のときは赤で表示します（家庭血圧の高血圧の目安）。<button class="btn" onclick="window.print()">この週を印刷</button></p>
+  </div>
+</section>
+<section id="tab-d-graph">
+  <div class="printhead" id="graphPrintHead"></div>
+  <div class="card noprint"><div class="row">
+    <label>表示する期間 <select id="gRange"><option value="week">表示中の1週間</option><option value="28" selected>この4週間</option><option value="91">この3か月</option><option value="365">この1年</option></select></label>
+    <button class="btn" onclick="window.print()">印刷</button>
+    <span class="muted">記録のある項目だけグラフになります。</span>
+  </div></div>
+  <div id="graphs"></div>
+</section>
+<section id="tab-d-ask">
+  <div class="card noprint">
+    <h2>気になっていること・心配なこと・先生に相談したいこと</h2>
+    <textarea id="dConcern" rows="4" placeholder="例：朝の血圧が高い日が続いている。夕食後に血糖値が上がりやすい気がする。"></textarea>
+    <div class="row" style="margin-top:.6rem">
+      <button class="btn primary big" id="dAskAll">4人の先生全員に聞く</button>
+      <label>伝える記録 <select id="dDays"><option value="7">この1週間</option><option value="14">この2週間</option><option value="28" selected>この4週間</option><option value="56">この8週間</option></select></label>
+      <label><input type="checkbox" id="dUsePrev" checked> 前回の回答も踏まえて聞く</label>
+    </div>
+    <p class="muted"><span class="ainote"></span>　毎日の記録・健康状態・特定健診の結果（直近3回）・上の内容をAIに送ります。お名前は送りません。</p>
+  </div>
+  <div class="docgrid two" id="dAskGrid"></div>
+</section>
+<section id="tab-d-compare">
+  <div class="card noprint"><div class="row">
+    <label>相談した日で揃える <select id="dRoundSel"></select></label>
+    <label class="wide">並べ方 <select id="dLayoutSel"><option value="4">横に4列</option><option value="2">2列×2段</option></select></label>
+    <button class="btn" onclick="window.print()">印刷</button>
+  </div></div>
+  <div class="printhead" id="dPrintHead"></div>
+  <div class="docgrid" id="dCompareGrid"></div>
+</section>
+
+<!-- ============ 設定 ============ -->
+<section id="tab-settings">
+  <div class="card">
+    <h2>文字の大きさ</h2>
+    <div class="row" id="fontRow"></div>
+  </div>
+  <div class="card">
+    <h2>AIのキー（APIキー）</h2>
+    <p class="muted">どれか1つあれば使えます。取り方は <a href="APIキー取得ガイド.html" target="_blank" rel="noopener">APIキー取得ガイド</a> をご覧ください。キーはこの端末の中だけに保存されます。</p>
+    <div id="keyRows"></div>
+    <details id="aiDetails"><summary>使うAIを自分で選ぶ（ふつうは自動のままで大丈夫です）</summary>
+      <div class="row" style="margin:.5rem 0" id="picker"></div>
+    </details>
+  </div>
+  <div class="card">
+    <h2>データの控え（ファイルに保存）</h2>
+    <p class="muted">データはこの端末（このブラウザ）の中に保存されています。ときどきファイルに保存しておくと安心です。特定健診と毎日の記録は別々のファイルになります。</p>
+    <table class="plain">
+      <tr><th>特定健診データ</th><td><button class="btn" id="expY">控えを保存</button> <button class="btn" id="csvY">Excel用の表（CSV）</button></td></tr>
+      <tr><th>日常健康データ</th><td><button class="btn" id="expD">控えを保存</button> <button class="btn" id="csvD">Excel用の表（CSV）</button></td></tr>
+      <tr><th>控えを読み込む</th><td><button class="btn" id="importBtn">ファイルから読み込む</button> <span class="muted">どちらの控えも、ここから読み込めます</span></td></tr>
+    </table>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    <p class="muted" id="lastBackup"></p>
+  </div>
+  <div class="card">
+    <h2>Google スプレッドシートに保存する（パソコンとスマホで同じデータを使う）</h2>
+    <div id="cloudStatus"></div>
+    <div class="row" style="margin-top:.5rem">
+      <input type="text" id="gasCode" style="flex:1;min-width:14rem" placeholder="接続コードを貼り付け">
+      <button class="btn primary" id="gasConnect">接続する</button>
+      <button class="btn" id="gasSync" style="display:none">今すぐ保存・更新</button>
+      <button class="link" id="gasOff" style="display:none">接続をやめる</button>
+    </div>
+    <p class="muted">Googleアカウントをお持ちの方向けです。準備の手順は「操作説明書」をご覧ください。使わなくてもアプリは動きます。</p>
+  </div>
+  <div class="card">
+    <h2>すべて消す</h2>
+    <button class="btn danger" id="wipeBtn">この端末のデータとキーを消す</button>
+    <p class="muted">端末を手放すときに使います。スプレッドシート側のデータは消えません。</p>
+  </div>
+  <p class="muted">健康ノート 第3.2版（HelthChk_Yearly_v3）　AIの回答は医師の診断ではありません。</p>
+</section>
+</main>
+<dialog id="dlg"><div id="dlgBody"></div></dialog>
+<script>
+"use strict";
+const CATALOG={"items": [{"name": "身長", "group": "身体計測", "unit": "cm", "ref": "—", "lo": null, "hi": null, "hi_excl": false, "intl": "—", "desc": "身長です。加齢による低下は骨や姿勢の変化の目安になります。", "custom": false}, {"name": "体重", "group": "身体計測", "unit": "kg", "ref": "—", "lo": null, "hi": null, "hi_excl": false, "intl": "—", "desc": "体重の年次変化を確認します。", "custom": false}, {"name": "腹囲", "group": "身体計測", "unit": "cm", "ref": "男性85未満", "lo": null, "hi": 85, "hi_excl": true, "intl": "男性94未満 (WHO)", "desc": "へその高さの腹囲。内臓脂肪の蓄積を推定する指標です。", "custom": false}, {"name": "BMI", "group": "身体計測", "unit": "", "ref": "18.5以上24.9未満", "lo": 18.5, "hi": 24.9, "hi_excl": true, "intl": "18.5〜24.9 (WHO)", "desc": "体重(kg)÷身長(m)²で求める体格指数です。", "custom": false}, {"name": "収縮期血圧", "group": "血圧", "unit": "mmHg", "ref": "130未満", "lo": null, "hi": 130, "hi_excl": true, "intl": "140未満 (WHO)", "desc": "心臓が収縮したとき（上）の血圧です。", "custom": false}, {"name": "拡張期血圧", "group": "血圧", "unit": "mmHg", "ref": "85未満", "lo": null, "hi": 85, "hi_excl": true, "intl": "90未満 (WHO)", "desc": "心臓が拡張したとき（下）の血圧です。", "custom": false}, {"name": "中性脂肪(空腹時)", "group": "脂質代謝", "unit": "mg/dL", "ref": "150未満", "lo": null, "hi": 150, "hi_excl": true, "intl": "—", "desc": "空腹時採血の中性脂肪。糖質・アルコール・脂質の摂り過ぎで上がります。", "custom": false}, {"name": "中性脂肪(随時)", "group": "脂質代謝", "unit": "mg/dL", "ref": "175未満", "lo": null, "hi": 175, "hi_excl": true, "intl": "—", "desc": "食後など随時採血の中性脂肪です。", "custom": false}, {"name": "HDLコレステロール", "group": "脂質代謝", "unit": "mg/dL", "ref": "40以上", "lo": 40, "hi": null, "hi_excl": false, "intl": "—", "desc": "いわゆる善玉コレステロール。低いと動脈硬化のリスクが上がります。", "custom": false}, {"name": "LDLコレステロール", "group": "脂質代謝", "unit": "mg/dL", "ref": "120未満", "lo": null, "hi": 120, "hi_excl": true, "intl": "—", "desc": "いわゆる悪玉コレステロール。高いと動脈硬化のリスクが上がります。", "custom": false}, {"name": "総コレステロール", "group": "脂質代謝", "unit": "mg/dL", "ref": "140〜199", "lo": 140, "hi": 199, "hi_excl": false, "intl": "—", "desc": "血液中のコレステロールの総量です。", "custom": false}, {"name": "AST(GOT)", "group": "肝機能", "unit": "U/L", "ref": "30以下", "lo": null, "hi": 30, "hi_excl": false, "intl": "—", "desc": "肝臓・心筋・筋肉に含まれる酵素。細胞が傷むと上がります。", "custom": false}, {"name": "ALT(GPT)", "group": "肝機能", "unit": "U/L", "ref": "30以下", "lo": null, "hi": 30, "hi_excl": false, "intl": "—", "desc": "主に肝臓に含まれる酵素。脂肪肝などで上がります。", "custom": false}, {"name": "γ-GT", "group": "肝機能", "unit": "U/L", "ref": "50以下", "lo": null, "hi": 50, "hi_excl": false, "intl": "—", "desc": "飲酒や胆道の状態を反映する酵素です。", "custom": false}, {"name": "血清アルブミン", "group": "肝機能", "unit": "g/dL", "ref": "3.9以上", "lo": 3.9, "hi": null, "hi_excl": false, "intl": "—", "desc": "肝臓で作られるたんぱく質。栄養状態の目安です。", "custom": false}, {"name": "空腹時血糖", "group": "糖代謝", "unit": "mg/dL", "ref": "100未満", "lo": null, "hi": 100, "hi_excl": true, "intl": "110未満 (WHO)", "desc": "空腹時の血液中のブドウ糖濃度です。", "custom": false}, {"name": "随時血糖", "group": "糖代謝", "unit": "mg/dL", "ref": "100未満", "lo": null, "hi": 100, "hi_excl": true, "intl": "—", "desc": "食事時間に関係なく測った血糖です。", "custom": false}, {"name": "HbA1c", "group": "糖代謝", "unit": "%", "ref": "5.6未満", "lo": null, "hi": 5.6, "hi_excl": true, "intl": "6.5未満 (WHO)", "desc": "過去1〜2か月の平均的な血糖状態を示します。", "custom": false}, {"name": "尿糖", "group": "糖代謝", "unit": "", "ref": "(-)", "lo": null, "hi": null, "hi_excl": false, "intl": "—", "desc": "尿中の糖。血糖が高いと陽性になります。", "custom": false}, {"name": "尿蛋白", "group": "腎機能", "unit": "", "ref": "(-)", "lo": null, "hi": null, "hi_excl": false, "intl": "—", "desc": "尿中のたんぱく。腎臓の障害で陽性になります。", "custom": false}, {"name": "尿潜血", "group": "腎機能", "unit": "", "ref": "(-)", "lo": null, "hi": null, "hi_excl": false, "intl": "—", "desc": "尿中の血液成分。腎臓や尿路の異常で陽性になります。", "custom": false}, {"name": "血清クレアチニン", "group": "腎機能", "unit": "mg/dL", "ref": "1.00以下", "lo": null, "hi": 1.0, "hi_excl": false, "intl": "—", "desc": "筋肉の老廃物。腎機能が下がると上がります。", "custom": false}, {"name": "eGFR", "group": "腎機能", "unit": "mL/min/1.73m²", "ref": "60.0以上", "lo": 60.0, "hi": null, "hi_excl": false, "intl": "—", "desc": "クレアチニン・年齢・性別から推算する腎臓のろ過能力です。", "custom": false}, {"name": "赤血球数", "group": "貧血・その他", "unit": "万/μL", "ref": "400〜539", "lo": 400, "hi": 539, "hi_excl": false, "intl": "—", "desc": "酸素を運ぶ赤血球の数です。", "custom": false}, {"name": "白血球数", "group": "貧血・その他", "unit": "/μL", "ref": "3100〜8400", "lo": 3100, "hi": 8400, "hi_excl": false, "intl": "—", "desc": "免疫を担う白血球の数。感染や炎症で増えます。", "custom": false}, {"name": "血色素量", "group": "貧血・その他", "unit": "g/dL", "ref": "13.1以上", "lo": 13.1, "hi": null, "hi_excl": false, "intl": "男性13.0以上 (WHO)", "desc": "ヘモグロビン量。低いと貧血です。", "custom": false}, {"name": "ヘマトクリット値", "group": "貧血・その他", "unit": "%", "ref": "38.5〜48.9", "lo": 38.5, "hi": 48.9, "hi_excl": false, "intl": "—", "desc": "血液中に占める赤血球の体積の割合です。", "custom": false}, {"name": "血小板数", "group": "貧血・その他", "unit": "万/μL", "ref": "14.5〜32.9", "lo": 14.5, "hi": 32.9, "hi_excl": false, "intl": "—", "desc": "出血を止める血小板の数です。", "custom": false}, {"name": "尿酸", "group": "痛風", "unit": "mg/dL", "ref": "2.1〜7.0", "lo": 2.1, "hi": 7.0, "hi_excl": false, "intl": "—", "desc": "プリン体の老廃物。高いと痛風や腎障害の原因になります。", "custom": false}, {"name": "フェリチン", "group": "追加検査", "unit": "ng/mL", "ref": "13〜277", "lo": 13, "hi": 277, "hi_excl": false, "intl": "—", "desc": "体内の貯蔵鉄の量。炎症や脂肪肝でも高くなります。", "custom": false}, {"name": "25OHビタミンD", "group": "追加検査", "unit": "ng/mL", "ref": "30.0以上で充足", "lo": 30.0, "hi": null, "hi_excl": false, "intl": "—", "desc": "体内のビタミンDの貯蔵量を示します。", "custom": false}], "doctors": [{"id": "ortho", "name": "オーソモレキュラー医", "icon": "🧬", "role": "オーソモレキュラー医学（分子栄養学）の医師", "focus": "栄養素の過不足（たんぱく質、ビタミンB群・D、鉄・フェリチン、亜鉛、マグネシウム等）、血糖変動、酸化・糖化・慢性炎症の観点から読み解き、食事と栄養補給を中心に助言する。"}, {"id": "standard", "name": "日本の標準的な医師", "icon": "🏥", "role": "日本の診療ガイドラインに沿って診療する内科医", "focus": "日本の各学会ガイドラインと特定健診の判定基準に基づき、受診勧奨・経過観察の区別、必要な追加検査、治療開始の目安、生活習慣の改善を助言する。"}, {"id": "preventive", "name": "予防医学の医師", "icon": "⏳", "role": "予防医学・抗加齢医学の医師", "focus": "心血管病・脳卒中・糖尿病・腎臓病・フレイルなど将来のリスクを数年単位の推移から評価し、運動、睡眠、食事、体組成、定期検査の計画を助言する。"}, {"id": "kampo", "name": "漢方医", "icon": "🌿", "role": "漢方・東洋医学の医師", "focus": "気血水・五臓・体質（証）の観点から検査値と自覚症状を読み解き、養生法、食養生、候補となる漢方処方の考え方を助言する。"}], "findings": ["心電図", "自覚症状", "既往歴", "服薬歴", "総合判定"]};
+const DISCLAIMER="※このAI回答は医師による診断ではありません。治療や服薬の判断は必ず医療機関に相談してください。";
+const PROVIDERS=[{id:"gemini",name:"Gemini（Google）"},{id:"anthropic",name:"Claude（Anthropic）"},{id:"openai",name:"ChatGPT（OpenAI）"}];
+const CONDITIONS=["高血圧症","糖尿病","高血糖（糖尿病予備群）","脂質異常症（コレステロール・中性脂肪）","心臓の病気","脳卒中（脳梗塞・脳出血）","腎臓の病気","肝臓の病気","痛風・高尿酸血症","骨粗しょう症","貧血","がん","ぜんそく・肺の病気","不眠","便秘"];
+const HABITS=["ウォーキング","散歩","ジョギング","体操・ストレッチ","ラジオ体操","筋力トレーニング","水泳・水中運動","ゴルフ","グラウンドゴルフ","テニス","卓球","ヨガ","太極拳","ダンス","サイクリング","畑仕事・庭仕事"];
+const SLOTS=[["am","朝"],["noon","昼"],["pm","夕"],["bed","寝る前"]];
+const MEALS=[["b","朝食"],["l","昼食"],["d","夕食"],["s","おやつ"]];
+const WD=["月","火","水","木","金","土","日"];
+const LS_DATA="hc3_data", LS_CFG="hc3_cfg", MAX_PEOPLE=4, TIMEOUT=240000;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const p2=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const now=()=>{const d=new Date();return `${iso(d)} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`};
+const toDate=s=>{const a=s.split("-").map(Number);return new Date(a[0],a[1]-1,a[2])};
+const addDays=(s,n)=>{const d=toDate(s);d.setDate(d.getDate()+n);return iso(d)};
+const monday=s=>addDays(s,-((toDate(s).getDay()+6)%7));
+const md_=s=>{const d=toDate(s);return `${d.getMonth()+1}/${d.getDate()}`};
+const wd=s=>WD[(toDate(s).getDay()+6)%7];
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){flash("この端末に保存できませんでした。ブラウザの保存容量か設定をご確認ください。","err",true);return false}}};
+
+/* ---------- データ ---------- */
+const blankPerson=name=>({id:newId(),name:name||"",birth_ym:"",sex:"男性",conditions:[],cond_other:"",meds:[],habits:[],health_done:false,
+  concern:"",checkups:[],consultations:[],daily:{},daily_concern:"",daily_consults:[]});
+const strs=a=>Array.isArray(a)?[...new Set(a.map(x=>String(x||"").trim()).filter(Boolean))]:[];
+const consults=a=>(a||[]).filter(c=>c&&c.answer).map(c=>({...c,id:String(c.id||newId())}));
+function normalize(d){
+  if(!d||!Array.isArray(d.people)) return null;
+  d.schema="helthchk_yearly_v3"; d.custom_items=Array.isArray(d.custom_items)?d.custom_items:[];
+  d.people=d.people.slice(0,MAX_PEOPLE).map(p=>{ const daily={};
+    for(const [k,v] of Object.entries(p.daily||{})) if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==="object") daily[k]=v;
+    return {id:String(p.id||newId()),name:String(p.name||""),birth_ym:String(p.birth_ym||p.birth_date||"").slice(0,7),sex:String(p.sex||"男性"),
+    conditions:strs(p.conditions),cond_other:String(p.cond_other||""),meds:strs(p.meds),habits:strs(p.habits),health_done:!!p.health_done,
+    concern:String(p.concern||""),
+    checkups:(p.checkups||[]).filter(c=>/^\d{4}-\d{2}-\d{2}$/.test(c.date)).map(c=>({date:c.date,facility:String(c.facility||""),values:{...(c.values||{})},findings:{...(c.findings||{})},notes:String(c.notes||""),source:String(c.source||"")})).sort((a,b)=>a.date<b.date?-1:1),
+    consultations:consults(p.consultations),daily,daily_concern:String(p.daily_concern||""),daily_consults:consults(p.daily_consults)}; });
+  if(!d.people.length) d.people=[blankPerson()];
+  return d;
+}
+let DB=normalize(store.get(LS_DATA))||normalize({people:[]});
+let CFG=Object.assign({keys:{},provider:"",models:{},font:"m",gas:"",cloudRev:null,cloudDirty:false,lastBackup:"",pid:"",mode:"yearly"},store.get(LS_CFG)||{});
+let pid=CFG.pid, draft=[], dirty=false, curTab="";
+const modelCache={}, askState={}, compareSel={};
+const saveCfg=()=>store.set(LS_CFG,CFG);
+function saveDB(){ DB.updated_at=now(); store.set(LS_DATA,DB); if(CFG.gas){ CFG.cloudDirty=true; saveCfg(); schedulePush(); } }
+const person=()=>DB.people.find(p=>p.id===pid)||DB.people[0];
+const ITEMS=()=>CATALOG.items.concat(DB.custom_items.map(i=>({...i,custom:true})));
+const itemOf=name=>ITEMS().find(i=>i.name===name);
+const isEmptyPerson=p=>!p.name&&!p.checkups.length&&!p.consultations.length&&!Object.keys(p.daily).length&&!p.daily_consults.length&&!p.meds.length&&!p.conditions.length;
+function judge(item,value){
+  const t=String(value??"").trim(); if(!t||!item) return "";
+  if((item.ref||"").startsWith("(-)")) return ["(-)","-","－","(－)","陰性"].includes(t)?"":"H";
+  const n=Number(t.replace(/,/g,"")); if(Number.isNaN(n)) return "";
+  if(item.lo!=null&&n<item.lo) return "L";
+  if(item.hi!=null&&(item.hi_excl?n>=item.hi:n>item.hi)) return "H";
+  return "";
+}
+function flash(text,kind="ok",keep=false){
+  $("flash").innerHTML=text?`<div class="msg ${kind}">${esc(text)}</div>`:"";
+  if(text&&!keep&&kind==="ok") setTimeout(()=>{ if($("flash").textContent===text) $("flash").innerHTML="" },5000);
+}
+async function guard(fn){ try{ await fn(); return true }catch(err){ flash(err.message||String(err),"err",true); return false } }
+function dialog(html){ $("dlgBody").innerHTML=html+(html.includes("dlg.close()")?"":`<p style="text-align:right"><button class="btn" onclick="dlg.close()">閉じる</button></p>`); $("dlg").showModal(); }
+function setDirty(v){ dirty=v; $("dirty").style.display=v?"":"none"; }
+function refresh(keepDraft){
+  if(!DB.people.some(p=>p.id===pid)) pid=DB.people[0].id;
+  CFG.pid=pid; saveCfg();
+  const p=person();
+  if(!keepDraft){ draft=JSON.parse(JSON.stringify(p.checkups)); setDirty(false); $("yConcern").value=p.concern||""; $("dConcern").value=p.daily_concern||""; }
+  document.documentElement.style.setProperty("--fs",{m:"17px",l:"20px",xl:"23px"}[CFG.font]||"17px");
+  $("person").innerHTML=DB.people.map(q=>`<option value="${esc(q.id)}" ${q.id===pid?"selected":""}>${esc(q.name||"（お名前未入力）")}</option>`).join("");
+  $("person").style.display=DB.people.length>1?"":"none";
+  $("pName").value=p.name; $("pSex").value=p.sex||"男性";
+  const [by,bm]=(p.birth_ym||"").split("-"), thisYear=new Date().getFullYear();
+  const era=y=>y>=2019?`令和${y-2018}`:y>=1989?`平成${y-1988}`:y>=1926?`昭和${y-1925}`:`大正${y-1911}`;
+  let yo=`<option value="">—</option>`; for(let y=thisYear;y>=1915;y--) yo+=`<option value="${y}" ${String(y)===by?"selected":""}>${y}年（${era(y)}年）</option>`;
+  $("pYear").innerHTML=yo;
+  $("pMonth").innerHTML=`<option value="">—</option>`+Array.from({length:12},(_,i)=>`<option value="${p2(i+1)}" ${p2(i+1)===bm?"selected":""}>${i+1}月</option>`).join("");
+  renderNav(); renderGuide(); renderData(); renderHealth(); renderAsk("y"); renderAsk("d"); renderCompare("y"); renderCompare("d"); renderWeek(); if(curTab==="d-graph") renderGraphs(); renderSettings(); renderCloud();
+}
+
+/* ---------- 画面の切り替え ---------- */
+const TABS={yearly:[["y-data","健診<br>データ"],["y-import","健診票を<br>読み取る"],["health","健康<br>状態"],["y-ask","AIに<br>相談"],["y-compare","回答を<br>見比べる"]],
+            daily:[["d-week","今週の<br>記録"],["d-graph","グラフ"],["health","健康<br>状態"],["d-ask","AIに<br>相談"],["d-compare","回答を<br>見比べる"]]};
+function renderNav(){
+  document.querySelectorAll("#modebar button").forEach(b=>b.classList.toggle("on",b.dataset.mode===CFG.mode));
+  $("nav").innerHTML=TABS[CFG.mode].map(([id,t])=>`<button data-tab="${id}" class="${id===curTab?"on":""}">${t}</button>`).join("");
+}
+function showTab(t){
+  curTab=t; renderNav();
+  document.querySelectorAll("main section").forEach(s=>s.classList.toggle("on",s.id==="tab-"+t));
+  if(t.endsWith("compare")) renderCompare(t[0]);
+  if(t==="d-graph") renderGraphs();
+  if(t==="settings"){ renderSettings(); if(CFG.provider&&CFG.keys[CFG.provider]&&!modelCache[CFG.provider]) loadModels(); }
+  window.scrollTo(0,0);
+}
+function setMode(m){ if(dirty&&m!==CFG.mode) commitDraft(), saveDB(), setDirty(false), renderData(); CFG.mode=m; saveCfg(); showTab(TABS[m][0][0]); }
+$("modebar").onclick=e=>{ const b=e.target.closest("button"); if(b) setMode(b.dataset.mode); };
+$("nav").onclick=e=>{ const b=e.target.closest("button"); if(b) showTab(b.dataset.tab); };
+$("gear").onclick=()=>showTab("settings");
+
+/* ---------- はじめての方の案内 ---------- */
+const hasKey=()=>PROVIDERS.some(p=>CFG.keys[p.id]);
+function renderGuide(){
+  const p=person(), s=[[!!p.name&&!!p.birth_ym,"お名前（通称でも可）・生まれた年と月・性別を入れて「保存」を押す",""],
+    [hasKey(),"AIのキーを入れる","settings"],[p.checkups.length>0,"健診票を読み取る（または手で入力する）","y-import"],
+    [p.health_done,"現在の健康状態を入れる（病気・飲んでいる薬など）","health"],
+    [p.consultations.length>0,"AIに相談する","y-ask"]];
+  if(s.every(x=>x[0])){ $("guideCard").style.display="none"; return; }
+  $("guideCard").style.display="";
+  $("guideCard").innerHTML=`<h2>はじめての方へ　次の順に進めてください</h2><ol class="steps">${s.map((x,i)=>`<li class="${x[0]?"done":""}"><span class="n">${x[0]?"✓":i+1}</span><span class="t">${x[1]}</span>${!x[0]&&x[2]?`<button class="btn" data-go="${x[2]}">ここを押す</button>`:""}</li>`).join("")}</ol>`;
+}
+$("guideCard").onclick=e=>{ if(e.target.dataset.go) showTab(e.target.dataset.go); };
+
+/* ---------- 健診データ ---------- */
+const shown=()=>draft.slice(-10).reverse();
+function renderData(){
+  const p=person(), cols=shown();
+  $("dataPrintHead").textContent=`特定健診の記録　${p.name}（${(p.birth_ym||"").replace("-","年")}${p.birth_ym?"月":""}生まれ・${p.sex||""}）`;
+  $("dataEmpty").innerHTML=cols.length?"":`<div class="msg warn">まだ健診データがありません。「健診票を読み取る」で写真から登録するか、「＋ 健診の回を追加」で手入力してください。</div>`;
+  if(!cols.length){ $("dataTable").innerHTML=""; return; }
+  let h=`<thead><tr><th class="name">検査項目</th><th class="wide">単位</th><th class="wide">基準値</th><th class="wide">国際的な目安</th>`;
+  for(const c of cols) h+=`<th>${esc(c.date)}<br><span class="noprint"><button class="link" data-editdate="${c.date}">日付</button><button class="link" data-delcheck="${c.date}">削除</button></span></th>`;
+  h+=`</tr></thead><tbody><tr><td class="name">健診を受けた所</td><td class="wide" colspan="3"></td>`;
+  for(const c of cols) h+=`<td class="val"><input data-f="facility" data-d="${c.date}" value="${esc(c.facility||"")}" style="text-align:center"></td>`;
+  h+=`</tr>`;
+  let last="";
+  for(const it of ITEMS()){
+    if(it.group!==last){ h+=`<tr class="grp"><td colspan="${4+cols.length}">${esc(it.group)}</td></tr>`; last=it.group; }
+    h+=`<tr><td class="name"><button class="link noprint" data-info="${esc(it.name)}" style="font-size:.95rem;text-align:left;color:var(--ink);text-decoration:underline dotted">${esc(it.name)}</button><span class="printhead" style="font-size:10px;font-weight:400;margin:0">${esc(it.name)}</span></td><td class="ref wide">${esc(it.unit)}</td><td class="ref wide">${esc(it.ref)}</td><td class="ref wide">${esc(it.intl||"—")}</td>`;
+    for(const c of cols){ const v=c.values[it.name]||""; h+=`<td class="val ${judge(it,v)}"><input inputmode="decimal" data-v="${esc(it.name)}" data-d="${c.date}" value="${esc(v)}"></td>`; }
+    h+=`</tr>`;
+  }
+  h+=`<tr class="grp"><td colspan="${4+cols.length}">所見・メモ</td></tr>`;
+  for(const f of CATALOG.findings){
+    h+=`<tr><td class="name">${esc(f)}</td><td class="wide" colspan="3"></td>`;
+    for(const c of cols) h+=`<td class="txt"><textarea data-fd="${esc(f)}" data-d="${c.date}" rows="2">${esc(c.findings[f]||"")}</textarea></td>`;
+    h+=`</tr>`;
+  }
+  h+=`<tr><td class="name">気づいたこと<br><span class="muted" style="font-size:.75rem">AIにも伝えます</span></td><td class="wide" colspan="3"></td>`;
+  for(const c of cols) h+=`<td class="txt"><textarea data-f="notes" data-d="${c.date}" rows="2">${esc(c.notes||"")}</textarea></td>`;
+  h+=`</tr></tbody>`;
+  $("dataTable").innerHTML=h;
+}
+$("dataTable").addEventListener("input",e=>{
+  const t=e.target, c=draft.find(x=>x.date===t.dataset.d); if(!c) return;
+  if(t.dataset.v){ c.values[t.dataset.v]=t.value.trim(); t.parentElement.className="val "+judge(itemOf(t.dataset.v),t.value); }
+  else if(t.dataset.fd) c.findings[t.dataset.fd]=t.value;
+  else if(t.dataset.f) c[t.dataset.f]=t.value;
+  setDirty(true);
+});
+$("dataTable").addEventListener("click",e=>{
+  const d=e.target.dataset;
+  if(d.info) showItem(d.info);
+  if(d.delcheck&&confirm(`${d.delcheck} の健診データを消しますか？`)){ commitDraft(); const p=person(); p.checkups=p.checkups.filter(c=>c.date!==d.delcheck); saveDB(); refresh(); }
+  if(d.editdate){ const nd=(prompt("健診日を直します（例 2026-09-02）",d.editdate)||"").trim(); if(nd&&nd!==d.editdate) guard(async()=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(nd)||Number.isNaN(Date.parse(nd))) throw new Error("健診日は 2026-09-02 の形で入力してください。");
+    if(draft.some(c=>c.date===nd)) throw new Error(`${nd} の健診データは既にあります。`);
+    draft.find(c=>c.date===d.editdate).date=nd; commitDraft(); saveDB(); refresh(); }); }
+});
+function clean(o){ const r={}; for(const [k,v] of Object.entries(o||{})){ const t=String(v??"").trim(); if(t) r[k]=t; } return r; }
+function commitDraft(){ person().checkups=draft.map(c=>({...c,values:clean(c.values),findings:clean(c.findings),facility:(c.facility||"").trim(),notes:(c.notes||"").trim()})).sort((a,b)=>a.date<b.date?-1:1); }
+function saveData(){ commitDraft(); saveDB(); refresh(); flash("健診データを保存しました。"); }
+$("saveData").onclick=saveData;
+$("addCheckup").onclick=()=>{
+  dialog(`<h2>健診の回を追加</h2><p><label>健診を受けた日 <input type="date" id="newDate"></label></p><div class="row"><button class="btn primary" id="okNew">追加</button><button class="btn" onclick="dlg.close()">やめる</button></div>`);
+  $("okNew").onclick=()=>guard(async()=>{ const d=$("newDate").value; if(!d) throw new Error("日付を選んでください。"); if(draft.some(c=>c.date===d)) throw new Error("その日の健診データは既にあります。");
+    draft.push({date:d,facility:"",values:{},findings:{},notes:"",source:"手入力"}); draft.sort((a,b)=>a.date<b.date?-1:1); commitDraft(); saveDB(); $("dlg").close(); refresh(); });
+};
+function addCustomItem(it){
+  const name=String(it.name||"").trim(); if(!name) throw new Error("項目名を入力してください。"); if(itemOf(name)) return false;
+  const num=v=>{ const n=parseFloat(v); return Number.isNaN(n)?null:n };
+  DB.custom_items.push({name,group:String(it.group||"追加検査"),unit:String(it.unit||""),ref:String(it.ref||"—"),lo:num(it.lo),hi:num(it.hi),hi_excl:false,intl:"—",desc:String(it.desc||"追加した検査項目です。")});
+  return true;
+}
+$("addItem").onclick=()=>{
+  dialog(`<h2>検査項目を追加</h2>
+  <p><label>項目名 <input type="text" id="niName"></label> <label>単位 <input type="text" id="niUnit" style="width:6rem"></label></p>
+  <p><label>基準値の書き方 <input type="text" id="niRef" placeholder="例 10〜40"></label></p>
+  <p><label>下限 <input type="text" id="niLo" style="width:5rem"></label> <label>上限 <input type="text" id="niHi" style="width:5rem"></label> <span class="muted">入れると色分けされます</span></p>
+  <div class="row"><button class="btn primary" id="okItem">追加</button><button class="btn" onclick="dlg.close()">やめる</button></div>`);
+  $("okItem").onclick=()=>guard(async()=>{ if(!addCustomItem({name:$("niName").value,unit:$("niUnit").value,ref:$("niRef").value,lo:$("niLo").value,hi:$("niHi").value})) throw new Error("同じ名前の項目が既にあります。"); saveDB(); $("dlg").close(); refresh(true); });
+};
+function showItem(name){
+  const it=itemOf(name);
+  const good=draft.slice(-10).filter(c=>c.values[name]&&!Number.isNaN(Number(c.values[name]))).map(c=>({d:c.date,v:Number(c.values[name])}));
+  let g="";
+  if(good.length){
+    const W=680,H=320,L=56,R=20,T=24,B=40; let ys=good.map(p=>p.v); if(it.lo!=null) ys.push(it.lo); if(it.hi!=null) ys.push(it.hi);
+    let lo=Math.min(...ys), hi=Math.max(...ys); const pad=(hi-lo||Math.abs(hi)||1)*0.12; lo-=pad; hi+=pad;
+    const x=i=>good.length===1?(L+W-R)/2:L+(W-L-R)*i/(good.length-1), y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+    g=`<svg viewBox="0 0 ${W} ${H}" style="width:100%"><rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="#fbfcfc" stroke="#d7dee3"/>`;
+    const bt=it.hi!=null?y(it.hi):T, bb=it.lo!=null?y(it.lo):H-B;
+    if(it.lo!=null||it.hi!=null) g+=`<rect x="${L}" y="${bt}" width="${W-L-R}" height="${bb-bt}" fill="#e2f1f0"/>`;
+    for(let k=0;k<=4;k++){ const v=lo+(hi-lo)*k/4; g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e4e9ec"/><text x="${L-6}" y="${y(v)+5}" text-anchor="end" font-size="14" fill="#56646e">${+v.toFixed(1)}</text>`; }
+    g+=`<polyline fill="none" stroke="#0f6e6e" stroke-width="3" points="${good.map((p,i)=>x(i)+","+y(p.v)).join(" ")}"/>`;
+    good.forEach((p,i)=>{ const f=judge(it,p.v); g+=`<circle cx="${x(i)}" cy="${y(p.v)}" r="6" fill="${f==="H"?"#c8452c":f==="L"?"#2a62b8":"#0f6e6e"}"/><text x="${x(i)}" y="${y(p.v)-12}" text-anchor="middle" font-size="16" font-weight="700">${p.v}</text><text x="${x(i)}" y="${H-B+20}" text-anchor="middle" font-size="14" fill="#56646e">${p.d.slice(0,4)}</text>`; });
+    g+=`</svg><p class="muted">色のついた帯が基準値の範囲です。</p>`;
+  }
+  dialog(`<h2>${esc(it.name)} <span class="muted">${esc(it.unit)}</span></h2><p>${esc(it.desc)}</p><p class="muted">基準値: ${esc(it.ref)}　国際的な目安: ${esc(it.intl||"—")}</p>${g}`);
+}
+
+/* ---------- 対象者 ---------- */
+$("person").onchange=e=>{ if(dirty&&!confirm("保存していない変更があります。切り替えますか？")){ e.target.value=pid; return; } pid=e.target.value; refresh(); };
+$("savePerson").onclick=()=>{ const p=person(); p.name=$("pName").value.trim(); p.birth_ym=$("pYear").value?`${$("pYear").value}-${$("pMonth").value||"01"}`:""; p.sex=$("pSex").value; saveDB(); refresh(true); flash("保存しました。"); };
+$("addPerson").onclick=()=>{ if(DB.people.length>=MAX_PEOPLE){ flash(`登録できるのは${MAX_PEOPLE}人までです。`,"warn"); return; } const n=(prompt("追加する人のお名前（通称でも可）")||"").trim(); if(!n) return; const p=blankPerson(n); DB.people.push(p); pid=p.id; saveDB(); refresh(); };
+$("delPerson").onclick=()=>{ if(DB.people.length<=1){ flash("最後の1人は削除できません。","warn"); return; } if(!confirm(`${person().name||"この人"} の記録とAIの回答をすべて消します。よろしいですか？`)) return; DB.people=DB.people.filter(p=>p.id!==pid); pid=""; saveDB(); refresh(); };
+
+/* ---------- AI ---------- */
+async function http(url,headers,body){
+  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),TIMEOUT); let res;
+  try{ res=await fetch(url,{method:body?"POST":"GET",headers:{...(body?{"Content-Type":"application/json"}:{}),...headers},body:body?JSON.stringify(body):undefined,signal:ctl.signal}); }
+  catch(e){ throw new Error(e.name==="AbortError"?"AIの返事に時間がかかりすぎました。もう一度お試しください。":"AIにつながりません。インターネットの接続をご確認ください。"); }
+  finally{ clearTimeout(timer); }
+  let data={}; try{ data=await res.json() }catch(e){}
+  if(!res.ok){ const m=(data.error&&(data.error.message||data.error))||"";
+    const hint={401:"AIのキーが正しくないようです。設定で入れ直してください。",403:"AIのキーが使えません（権限または残高）。",404:"選んだAIの種類（モデル）が使えません。設定の「使うAIを自分で選ぶ」で選び直してください。",429:"回数の上限に達しました。少し待ってからお試しください。",402:"残高が足りません。AIの会社のサイトで残高をご確認ください。"}[res.status]||"AIがエラーを返しました。";
+    throw new Error(`${hint}（${res.status} ${String(m).slice(0,160)}）`); }
+  return data;
+}
+function needKey(prov){ const k=CFG.keys[prov]; if(!k) throw new Error("AIのキーが入っていません。「設定」でキーを入れてください。"); return k; }
+async function listModels(prov){
+  const key=needKey(prov);
+  if(prov==="gemini"){ const r=await http("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",{"x-goog-api-key":key});
+    return (r.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/.test(m.name)&&!/embedding|image|tts|audio|live|robotics|computer/.test(m.name)).map(m=>m.name.split("/").pop()).sort().reverse(); }
+  if(prov==="anthropic"){ const r=await http("https://api.anthropic.com/v1/models?limit=100",{"x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}); return (r.data||[]).map(m=>m.id); }
+  const r=await http("https://api.openai.com/v1/models",{"Authorization":"Bearer "+key});
+  return (r.data||[]).map(m=>m.id).filter(id=>/^(gpt-|o\d|chatgpt)/.test(id)&&!/audio|realtime|tts|transcribe|image|search|instruct|embedding|codex/.test(id)).sort().reverse();
+}
+function recommend(prov,list){
+  const pick=(...tests)=>{ for(const t of tests){ const m=list.find(t); if(m) return m; } return list[0]||""; };
+  const stable=m=>!/preview|exp|latest|\d{4}-\d{2}-\d{2}|-\d{8}$/.test(m);
+  if(prov==="gemini") return pick(m=>/flash/.test(m)&&!/lite/.test(m)&&stable(m),m=>/flash/.test(m)&&!/lite/.test(m),m=>/flash/.test(m));
+  if(prov==="anthropic") return pick(m=>/sonnet/.test(m),m=>/opus/.test(m));
+  return pick(m=>/^gpt-[\d.]+$/.test(m),m=>/^gpt-[\d.]+-mini$/.test(m),m=>/^gpt-/.test(m)&&stable(m));
+}
+async function currentAI(){
+  let prov=CFG.provider&&CFG.keys[CFG.provider]?CFG.provider:(PROVIDERS.find(p=>CFG.keys[p.id])||{}).id;
+  if(!prov) throw new Error("AIのキーが入っていません。「設定」でキーを入れてください。");
+  if(!CFG.models[prov]){ const list=modelCache[prov]||(modelCache[prov]=await listModels(prov)); CFG.models[prov]=recommend(prov,list); saveCfg(); }
+  if(!CFG.models[prov]) throw new Error("使えるAIの種類が見つかりません。設定の「使うAIを自分で選ぶ」で選んでください。");
+  return {provider:prov,model:CFG.models[prov]};
+}
+async function generate(ai,prompt,files=[],system=""){
+  const key=needKey(ai.provider); let text="";
+  if(ai.provider==="gemini"){
+    const body={contents:[{role:"user",parts:[...files.map(f=>({inline_data:{mime_type:f.mime,data:f.data}})),{text:prompt}]}]};
+    if(system) body.system_instruction={parts:[{text:system}]};
+    const r=await http(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(ai.model)}:generateContent`,{"x-goog-api-key":key},body);
+    try{ text=r.candidates[0].content.parts.filter(p=>!p.thought).map(p=>p.text||"").join(""); }catch(e){}
+  }else if(ai.provider==="anthropic"){
+    const content=[...files.map(f=>({type:f.mime==="application/pdf"?"document":"image",source:{type:"base64",media_type:f.mime,data:f.data}})),{type:"text",text:prompt}];
+    const body={model:ai.model,max_tokens:8000,messages:[{role:"user",content}]}; if(system) body.system=system;
+    const r=await http("https://api.anthropic.com/v1/messages",{"x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body);
+    text=(r.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  }else{
+    if(files.some(f=>f.mime==="application/pdf")) throw new Error("ChatGPTではPDFを読み取れません。写真（画像）にするか、GeminiかClaudeをお使いください。");
+    const content=[{type:"text",text:prompt},...files.map(f=>({type:"image_url",image_url:{url:`data:${f.mime};base64,${f.data}`}}))];
+    const r=await http("https://api.openai.com/v1/chat/completions",{"Authorization":"Bearer "+key},{model:ai.model,messages:[...(system?[{role:"system",content:system}]:[]),{role:"user",content}]});
+    try{ text=r.choices[0].message.content||""; }catch(e){}
+  }
+  if(!text.trim()) throw new Error("AIから返事がありませんでした。もう一度お試しください。");
+  return text.trim();
+}
+const provName=id=>(PROVIDERS.find(p=>p.id===id)||{}).name||id;
+function aiNote(){ const prov=CFG.provider&&CFG.keys[CFG.provider]?CFG.provider:(PROVIDERS.find(p=>CFG.keys[p.id])||{}).id;
+  return prov?`使うAI: ${provName(prov)}${CFG.models[prov]?"（"+CFG.models[prov]+"）":""}`:"AIのキーがまだ入っていません。「設定」で入れてください。"; }
+
+
+function setAiNotes(){ document.querySelectorAll(".ainote").forEach(e=>e.textContent=aiNote()); }
+
+/* ---------- 健診票の読み取り ---------- */
+let picked=[], extracted=null;
+function fileToData(file){ return new Promise((ok,ng)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>ng(new Error("ファイルを読めませんでした。")); r.readAsDataURL(file); }); }
+async function prepare(file){
+  const url=await fileToData(file);
+  if(file.type==="application/pdf") return {name:file.name,mime:file.type,data:url.split(",")[1],preview:""};
+  const img=await new Promise((ok,ng)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ng(new Error(`${file.name} は画像として開けませんでした。`)); i.src=url; });
+  const max=2200, sc=Math.min(1,max/Math.max(img.width,img.height)), cv=document.createElement("canvas");
+  cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc); cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+  const out=cv.toDataURL("image/jpeg",0.9);
+  return {name:file.name,mime:"image/jpeg",data:out.split(",")[1],preview:out};
+}
+$("pickBtn").onclick=()=>$("fileInput").click();
+$("fileInput").onchange=()=>guard(async()=>{ for(const f of $("fileInput").files) picked.push(await prepare(f)); $("fileInput").value=""; renderThumbs(); });
+function renderThumbs(){
+  $("thumbs").innerHTML=picked.map((f,i)=>`<div class="thumb">${f.preview?`<img src="${f.preview}" alt="">`:`<div style="height:7rem;display:flex;align-items:center;justify-content:center;background:#eee;border-radius:5px">PDF</div>`}${esc(f.name)}<br><button class="link" data-rm="${i}">外す</button></div>`).join("");
+  $("extractBtn").style.display=picked.length?"":"none";
+}
+$("thumbs").onclick=e=>{ if(e.target.dataset.rm!==undefined){ picked.splice(+e.target.dataset.rm,1); renderThumbs(); } };
+function extractPrompt(){
+  return "添付は日本の健康診断の報告書（特定健診・後期高齢者健診の結果票、または検査会社の検査報告書）です。印字されている内容を正確に読み取り、次のJSONだけを出力してください。説明文やコードブロック記号は不要です。\n\n"
+  +'{"person": {"name": "", "birth_date": "YYYY-MM-DD", "sex": ""},\n "checkups": [{"date": "YYYY-MM-DD", "facility": "",\n   "values": {"項目名": "値"},\n   "findings": {"心電図": "", "自覚症状": "", "既往歴": "", "服薬歴": "", "総合判定": ""}}],\n "new_items": [{"name": "", "unit": "", "ref": "", "group": ""}]}\n\n規則:\n'
+  +"- 「今回」「前回」「前々回」の列があれば、列ごとに別の checkups 要素にする（健診年月日を date に）。\n- 和暦や「26年9月2日」のような表記は西暦 YYYY-MM-DD に直す。\n- 値は数値の文字列のみ（* や ** の印、H/L、単位は付けない）。定性検査は (-) や (+) のまま。\n- 「—」や空欄など測定値がない項目は出力しない。推測で値を埋めない。読めない値は出力しない。\n- 血圧は「収縮期血圧」「拡張期血圧」に分ける。\n"
+  +"- 項目名は次の一覧に同じ意味のものがあれば必ずその表記を使う: "+ITEMS().map(i=>i.name).join("、")+"\n- 一覧にない項目で測定値があるものは印字どおりの名前で values に入れ、new_items に単位・基準値・分類を書く。\n- findings は記載があるものだけ。総合判定は本文をそのまま転記する。\n- 住所・電話番号・保険者番号などは出力しない。";
+}
+function parseExtract(text){
+  const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error("AIの読み取り結果を解釈できませんでした。もう一度お試しください。");
+  let r; try{ r=JSON.parse(m[0]) }catch(e){ throw new Error("AIの読み取り結果が壊れていました。もう一度お試しください。"); }
+  const out=[]; for(const c of r.checkups||[]){ const date=String(c.date||"").trim(); if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const values={}; for(const [k,v] of Object.entries(c.values||{})){ const t=String(v??"").trim(); if(t&&!["—","-","－","None","null"].includes(t)) values[String(k).trim()]=t; }
+    const findings={}; for(const [k,v] of Object.entries(c.findings||{})) if(CATALOG.findings.includes(k)&&String(v||"").trim()) findings[k]=String(v).trim();
+    if(Object.keys(values).length||Object.keys(findings).length) out.push({date,facility:String(c.facility||"").trim(),values,findings}); }
+  return {person:r.person||{},checkups:out,new_items:(r.new_items||[]).filter(i=>i&&i.name)};
+}
+$("extractBtn").onclick=async()=>{
+  $("extractBtn").disabled=true; $("pickBtn").disabled=true;
+  await guard(async()=>{
+    const ai=await currentAI(), merged={}, items={}; let who={};
+    for(let i=0;i<picked.length;i++){
+      $("extractState").innerHTML=`<span class="spin"></span>AIが読み取っています（${i+1}／${picked.length}枚目。1枚に20秒〜1分ほど）`;
+      const r=parseExtract(await generate(ai,extractPrompt(),[picked[i]]));
+      if(!who.name) who=r.person; for(const it of r.new_items) items[it.name]=items[it.name]||it;
+      for(const c of r.checkups){ const t=merged[c.date]=merged[c.date]||{date:c.date,facility:"",values:{},findings:{},files:[]};
+        Object.assign(t.values,c.values); Object.assign(t.findings,c.findings); t.facility=t.facility||c.facility; t.files.push(picked[i].name); }
+    }
+    extracted={person:who,checkups:Object.keys(merged).sort().map(d=>merged[d]),new_items:Object.values(items).filter(i=>!itemOf(i.name))};
+    flash(""); renderReview();
+  });
+  $("extractBtn").disabled=false; $("pickBtn").disabled=false; $("extractState").textContent="";
+};
+function renderReview(){
+  const p=person(); let h="";
+  if(!extracted.checkups.length) h=`<div class="msg warn">健診データを読み取れませんでした。写真を撮り直すか、もう一度お試しください。</div>`;
+  extracted.checkups.forEach((c,ci)=>{
+    const old=p.checkups.find(x=>x.date===c.date);
+    h+=`<div class="card"><h2>${esc(c.date)} の健診 <span class="pill ${old?"":"ok"}">${old?"登録済みの回に追加":"新しい回"}</span></h2><p><label><input type="checkbox" class="useCk" data-ci="${ci}" checked> この回を保存する</label></p>
+    <div class="scroll"><table class="data"><thead><tr><th class="name">検査項目</th><th>読み取った値</th><th>登録済みの値</th><th class="wide">基準値</th></tr></thead><tbody>`;
+    for(const [k,v] of Object.entries(c.values)){ const it=itemOf(k), ov=old?old.values[k]||"":"", ni=extracted.new_items.find(n=>n.name===k);
+      h+=`<tr class="${ov&&ov!==v?"diff":""}"><td class="name">${esc(k)} ${!it?`<span class="pill">新しい項目</span>`:""}</td><td class="val ${judge(it,v)}"><input data-ci="${ci}" data-k="${esc(k)}" value="${esc(v)}"></td><td style="text-align:right">${esc(ov)}</td><td class="ref wide">${esc(it?it.ref:(ni?ni.ref||"":""))}</td></tr>`; }
+    for(const [k,v] of Object.entries(c.findings)) h+=`<tr><td class="name">${esc(k)}</td><td colspan="3" style="white-space:normal">${esc(v)}</td></tr>`;
+    h+=`</tbody></table></div></div>`;
+  });
+  if(extracted.checkups.length) h+=`<div class="msg warn">AIは読み間違えることがあります。元の健診票と見比べて、違う数字は直してから保存してください。黄色の行は登録済みの値と違うところです。</div><div class="row"><button class="btn primary big" id="saveExtract">この内容で保存する</button><button class="btn" id="cancelExtract">やめる</button></div>`;
+  $("review").innerHTML=h;
+  $("review").oninput=e=>{ const d=e.target.dataset; if(d.k) extracted.checkups[d.ci].values[d.k]=e.target.value.trim(); };
+  if($("cancelExtract")) $("cancelExtract").onclick=()=>{ extracted=null; $("review").innerHTML=""; };
+  if($("saveExtract")) $("saveExtract").onclick=()=>guard(async()=>{
+    const use=[...document.querySelectorAll(".useCk")].filter(x=>x.checked).map(x=>extracted.checkups[x.dataset.ci]);
+    if(!use.length) throw new Error("保存する回が選ばれていません。");
+    if(dirty) commitDraft();
+    for(const c of use){ for(const n of Object.keys(c.values)) if(!itemOf(n)) addCustomItem(extracted.new_items.find(x=>x.name===n)||{name:n});
+      let t=p.checkups.find(x=>x.date===c.date); if(!t){ t={date:c.date,facility:"",values:{},findings:{},notes:"",source:""}; p.checkups.push(t); }
+      Object.assign(t.values,clean(c.values)); Object.assign(t.findings,clean(c.findings)); t.facility=t.facility||c.facility; t.source="AI読み取り: "+c.files.join("、"); }
+    p.checkups.sort((a,b)=>a.date<b.date?-1:1);
+    const b=extracted.person.birth_date||""; if(!p.birth_ym&&/^\d{4}-\d{2}/.test(b)) p.birth_ym=b.slice(0,7);
+    extracted=null; picked=[]; renderThumbs(); $("review").innerHTML=""; saveDB(); refresh(); showTab("y-data"); flash(`${use.length}回分の健診データを保存しました。`);
+  });
+}
+
+
+
+/* ---------- 健康状態 ---------- */
+function renderHealth(){
+  const p=person();
+  $("condChips").innerHTML=CONDITIONS.map(c=>`<button class="chip ${p.conditions.includes(c)?"on":""}" data-cond="${esc(c)}">${esc(c)}</button>`).join("")
+    +p.conditions.filter(c=>!CONDITIONS.includes(c)).map(c=>`<button class="chip on" data-cond="${esc(c)}">${esc(c)}</button>`).join("");
+  if(document.activeElement!==$("condOther")) $("condOther").value=p.cond_other;
+  const tags=(list,key)=>list.length?list.map((m,i)=>`<span class="tag">${esc(m)}<button data-rm="${key}" data-i="${i}" aria-label="消す">×</button></span>`).join(""):`<span class="muted">（まだ入っていません）</span>`;
+  $("medList").innerHTML=tags(p.meds,"meds"); $("habitList").innerHTML=tags(p.habits,"habits");
+  $("habitSel").innerHTML=HABITS.filter(h=>!p.habits.includes(h)).map(h=>`<option>${esc(h)}</option>`).join("")+`<option value="__other">そのほか（自分で入力）</option>`;
+  $("habitOther").style.display=$("habitSel").value==="__other"?"":"none";
+}
+function healthChanged(){ saveDB(); renderHealth(); renderWeek(); }
+$("condChips").onclick=e=>{ const c=e.target.dataset.cond; if(!c) return; const p=person(); p.conditions=p.conditions.includes(c)?p.conditions.filter(x=>x!==c):[...p.conditions,c]; healthChanged(); };
+$("condOther").oninput=e=>{ person().cond_other=e.target.value; saveDB(); };
+function addMeds(names){ const p=person(); p.meds=strs([...p.meds,...names]); healthChanged(); }
+$("medAdd").onclick=()=>{ const v=$("medInput").value.trim(); if(v){ addMeds([v]); $("medInput").value=""; } };
+$("medInput").onkeydown=e=>{ if(e.key==="Enter") $("medAdd").click(); };
+$("medPhoto").onclick=()=>$("medFile").click();
+$("medFile").onchange=()=>guard(async()=>{
+  const f=$("medFile").files[0]; if(!f) return; $("medFile").value="";
+  $("medState").innerHTML=`<span class="spin"></span>AIが薬の名前を読み取っています…`; $("medPhoto").disabled=true;
+  try{
+    const ai=await currentAI(), img=await prepare(f);
+    const text=await generate(ai,'写真に写っている薬（医薬品・サプリメント）の名前を読み取り、JSON配列だけを出力してください。例: ["アムロジピン錠5mg","メトホルミン錠250mg"]\n規則: 印字されている名前と規格（mgなど）をそのまま書く。薬局名・患者名・用法・日数は含めない。同じ薬は1回だけ。読めないもの、薬でないものは含めない。薬が写っていなければ [] を出力する。',[img]);
+    const m=text.match(/\[[\s\S]*\]/); let names=[]; try{ names=strs(JSON.parse(m[0])).slice(0,30); }catch(e){}
+    if(!names.length){ flash("薬の名前を読み取れませんでした。明るい場所で、文字が大きく写るように撮り直してください。","warn"); return; }
+    dialog(`<h2>読み取った薬</h2><p class="muted">正しいものにチェックを付けて「追加」を押してください。AIは読み間違えることがあります。</p>${names.map((n,i)=>`<p><label style="font-size:1rem;color:var(--ink)"><input type="checkbox" class="medCk" value="${esc(n)}" checked> ${esc(n)}</label></p>`).join("")}<div class="row"><button class="btn primary" id="medOk">追加</button><button class="btn" onclick="dlg.close()">やめる</button></div>`);
+    $("medOk").onclick=()=>{ addMeds([...document.querySelectorAll(".medCk")].filter(x=>x.checked).map(x=>x.value)); $("dlg").close(); };
+  } finally { $("medState").textContent="薬の箱・シート・薬の袋・お薬手帳を撮ると、AIが薬の名前を読み取ります。"; $("medPhoto").disabled=false; }
+});
+$("habitSel").onchange=()=>{ $("habitOther").style.display=$("habitSel").value==="__other"?"":"none"; };
+$("habitAdd").onclick=()=>{ const v=$("habitSel").value==="__other"?$("habitOther").value.trim():$("habitSel").value; if(!v) return; const p=person(); p.habits=strs([...p.habits,v]); $("habitOther").value=""; healthChanged(); };
+document.getElementById("tab-health").addEventListener("click",e=>{ const k=e.target.dataset.rm; if(k){ person()[k].splice(+e.target.dataset.i,1); healthChanged(); } });
+$("healthSave").onclick=()=>{ const p=person(); p.cond_other=$("condOther").value.trim(); p.health_done=true; saveDB(); renderGuide(); flash("健康状態を保存しました。"); };
+function healthText(p){
+  const cond=[...p.conditions,...(p.cond_other?[p.cond_other]:[])];
+  return `【現在かかっている病気】${cond.length?cond.join("、"):"（申告なし）"}\n【飲んでいる薬】${p.meds.length?p.meds.join("、"):"（申告なし）"}\n【健康のために行っていること】${p.habits.length?p.habits.join("、"):"（申告なし）"}`;
+}
+
+/* ---------- 毎日の健康記録 ---------- */
+const todayIso=()=>iso(new Date());
+let wk=monday(todayIso()), day=todayIso(), dayTimer=null;
+const blankRec=()=>({m:{},meals:{},habits:[]});
+function recOf(d,create){ const p=person(); if(!p.daily[d]&&create) p.daily[d]=blankRec(); const r=p.daily[d]; if(r){ r.m=r.m||{}; r.meals=r.meals||{}; r.habits=r.habits||[]; } return r; }
+function recEmpty(r){ return !r||(!Object.values(r.m||{}).some(s=>Object.values(s||{}).some(Boolean))&&!Object.values(r.meals||{}).some(s=>Object.values(s||{}).some(Boolean))&&!(r.habits||[]).length&&!["gmax","gmin","pmax","pmin","weight","steps","sport","out","home","memo"].some(k=>r[k])); }
+function renderWeek(){
+  const p=person(), days=Array.from({length:7},(_,i)=>addDays(wk,i)), t=todayIso();
+  if(!days.includes(day)) day=days.includes(t)?t:wk;
+  const y=toDate(wk).getFullYear();
+  $("weekLabel").textContent=`${y}年 ${md_(wk)}（月）〜 ${md_(days[6])}（日）`;
+  $("weekPrintHead").textContent=`毎日の健康記録　${p.name}　${y}年 ${md_(wk)}（月）〜 ${md_(days[6])}（日）`;
+  $("dayStrip").innerHTML=days.map(d=>`<button data-day="${d}" class="${d===day?"on":""} ${d===t?"today":""}"><b>${wd(d)}</b><span>${md_(d)}</span><i>${recEmpty(p.daily[d])?"":"●"}</i></button>`).join("");
+  renderDayForm(); renderHabitGrid(); renderWeekTable();
+}
+function renderDayForm(){
+  const r=recOf(day)||blankRec(), v=(o,k)=>esc((o||{})[k]||"");
+  let h=`<div class="card"><h2>${md_(day)}（${wd(day)}）の記録 ${day===todayIso()?`<span class="pill ok">今日</span>`:""} <span class="muted" id="daySaved"></span></h2>
+  <h3>血圧・脈拍・血糖値 <span class="muted">測ったところだけ入れます（1日4回まで）</span></h3>`;
+  for(const [k,label] of SLOTS){ const s=r.m[k]||{};
+    h+=`<div class="slot"><b>${label}</b>
+      <label>時刻 <input type="time" data-p="m.${k}.t" value="${v(s,"t")}"></label>
+      <label>血圧 上 <input inputmode="numeric" class="num" data-p="m.${k}.sys" value="${v(s,"sys")}"></label>
+      <label>下 <input inputmode="numeric" class="num" data-p="m.${k}.dia" value="${v(s,"dia")}"></label>
+      <label>脈拍 <input inputmode="numeric" class="num" data-p="m.${k}.pulse" value="${v(s,"pulse")}"></label>
+      <label>血糖値 <input inputmode="numeric" class="num" data-p="m.${k}.glu" value="${v(s,"glu")}"></label>
+      <label><select data-p="m.${k}.gt"><option value="">食前・食後</option>${["空腹時","食前","食後"].map(o=>`<option ${s.gt===o?"selected":""}>${o}</option>`).join("")}</select></label></div>`; }
+  h+=`<details ${["gmax","gmin","pmax","pmin"].some(k=>r[k])?"open":""}><summary>腕時計などで1日の最高・最低がわかる方</summary><div class="slot">
+      <label>血糖値 最高 <input inputmode="numeric" class="num" data-p="gmax" value="${v(r,"gmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="gmin" value="${v(r,"gmin")}"></label>
+      <label>脈拍 最高 <input inputmode="numeric" class="num" data-p="pmax" value="${v(r,"pmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="pmin" value="${v(r,"pmin")}"></label></div></details>
+  <h3>体重・歩数</h3>
+    <div class="slot"><label>体重 <input inputmode="decimal" class="num" data-p="weight" value="${v(r,"weight")}"> kg</label><label>歩数 <input inputmode="numeric" class="num" style="width:5.5rem" data-p="steps" value="${v(r,"steps")}"> 歩</label></div>
+  <h3>食事</h3>`;
+  for(const [k,label] of MEALS){ const s=r.meals[k]||{};
+    h+=`<div class="slot"><b>${label}</b><label>時刻 <input type="time" data-p="meals.${k}.t" value="${v(s,"t")}"></label><input type="text" class="grow" data-p="meals.${k}.x" value="${v(s,"x")}" placeholder="食べたもの"></div>`; }
+  h+=`<h3>この日にしたこと</h3>
+    <div class="slot"><b>運動</b><input type="text" class="grow" data-p="sport" value="${v(r,"sport")}" placeholder="例：ウォーキング40分、ゴルフ練習"></div>
+    <div class="slot"><b>外出</b><input type="text" class="grow" data-p="out" value="${v(r,"out")}" placeholder="例：買い物、通院、友人と食事"></div>
+    <div class="slot"><b>家で</b><input type="text" class="grow" data-p="home" value="${v(r,"home")}" placeholder="例：庭の手入れ、掃除、読書"></div>
+    <div class="slot"><b>体調</b><input type="text" class="grow" data-p="memo" value="${v(r,"memo")}" placeholder="例：よく眠れた、少し頭が重い"></div></div>`;
+  $("dayForm").innerHTML=h;
+}
+$("dayForm").addEventListener("input",e=>{
+  const path=e.target.dataset.p; if(!path) return; const r=recOf(day,true), ks=path.split("."), val=e.target.value.trim();
+  if(ks.length===1) r[ks[0]]=val; else { r[ks[0]][ks[1]]=r[ks[0]][ks[1]]||{}; r[ks[0]][ks[1]][ks[2]]=val; }
+  clearTimeout(dayTimer); dayTimer=setTimeout(dayCommit,700);
+});
+function dayCommit(){
+  clearTimeout(dayTimer); dayTimer=null; const p=person();
+  for(const d of Object.keys(p.daily)) if(recEmpty(p.daily[d])) delete p.daily[d];
+  saveDB(); const s=$("daySaved"); if(s) s.textContent="保存しました "+now().slice(11,16);
+  document.querySelectorAll("#dayStrip button").forEach(b=>b.querySelector("i").textContent=recEmpty(p.daily[b.dataset.day])?"":"●");
+  renderWeekTable(); if(curTab==="d-graph") renderGraphs();
+}
+$("dayStrip").onclick=e=>{ const b=e.target.closest("button"); if(!b) return; if(dayTimer) dayCommit(); day=b.dataset.day; renderWeek(); };
+const moveWeek=n=>{ if(dayTimer) dayCommit(); wk=n===0?monday(todayIso()):addDays(wk,7*n); day=n===0?todayIso():wk; renderWeek(); };
+$("wPrev").onclick=()=>moveWeek(-1); $("wNext").onclick=()=>moveWeek(1); $("wToday").onclick=()=>moveWeek(0);
+function renderHabitGrid(){
+  const p=person(), days=Array.from({length:7},(_,i)=>addDays(wk,i));
+  if(!p.habits.length){ $("habitCard").innerHTML=`<h2>健康のために行ったこと</h2><p class="muted">「健康状態」の画面で、ウォーキングなど「健康のために行っていること」を入れると、ここで行った日に ✓ を付けられます。 <button class="btn noprint" id="goHealth">健康状態を入れる</button></p>`; $("goHealth").onclick=()=>showTab("health"); return; }
+  let h=`<h2>健康のために行ったこと <span class="muted">行った日を押して ✓ を付けます</span></h2><div class="scroll"><table class="data"><thead><tr><th class="name"></th>${days.map(d=>`<th>${wd(d)}<br><span style="font-weight:400">${md_(d)}</span></th>`).join("")}</tr></thead><tbody>`;
+  for(const hb of p.habits) h+=`<tr><td class="name">${esc(hb)}</td>${days.map(d=>{ const on=((p.daily[d]||{}).habits||[]).includes(hb); return `<td class="ck"><button data-hb="${esc(hb)}" data-day="${d}" class="${on?"on":""}" aria-label="${esc(hb)} ${md_(d)}">${on?"✓":""}</button></td>`; }).join("")}</tr>`;
+  $("habitCard").innerHTML=h+`</tbody></table></div>`;
+}
+$("habitCard").addEventListener("click",e=>{ const hb=e.target.dataset.hb; if(!hb) return; const r=recOf(e.target.dataset.day,true); r.habits=r.habits.includes(hb)?r.habits.filter(x=>x!==hb):[...r.habits,hb]; dayCommit(); renderHabitGrid(); });
+function renderWeekTable(){
+  const p=person(), days=Array.from({length:7},(_,i)=>addDays(wk,i)), R=d=>p.daily[d]||blankRec();
+  const rows=[], add=(label,fn)=>{ const cells=days.map(fn); if(cells.some(c=>c&&c.t)) rows.push([label,cells]); };
+  for(const [k,label] of SLOTS) add(`血圧 ${label}`,d=>{ const s=(R(d).m||{})[k]||{}; return (s.sys||s.dia)?{t:`${s.sys||"?"}/${s.dia||"?"}`,hi:Number(s.sys)>=135||Number(s.dia)>=85}:null; });
+  for(const [k,label] of SLOTS) add(`脈拍 ${label}`,d=>{ const s=(R(d).m||{})[k]||{}; return s.pulse?{t:s.pulse}:null; });
+  for(const [k,label] of SLOTS) add(`血糖値 ${label}`,d=>{ const s=(R(d).m||{})[k]||{}; return s.glu?{t:s.glu+(s.gt?`<br><small>${esc(s.gt)}</small>`:""),raw:true}:null; });
+  add("血糖値 最高/最低",d=>{ const r=R(d); return (r.gmax||r.gmin)?{t:`${r.gmax||"?"}/${r.gmin||"?"}`}:null; });
+  add("脈拍 最高/最低",d=>{ const r=R(d); return (r.pmax||r.pmin)?{t:`${r.pmax||"?"}/${r.pmin||"?"}`}:null; });
+  add("体重 kg",d=>R(d).weight?{t:R(d).weight}:null); add("歩数",d=>R(d).steps?{t:R(d).steps}:null);
+  for(const [k,label] of MEALS) add(label,d=>{ const s=(R(d).meals||{})[k]||{}; return (s.x||s.t)?{t:(s.t?`<small>${esc(s.t)}</small> `:"")+esc(s.x||""),raw:true,wrap:true}:null; });
+  for(const [k,label] of [["sport","運動"],["out","外出"],["home","家で"],["memo","体調"]]) add(label,d=>R(d)[k]?{t:R(d)[k],wrap:true}:null);
+  if(!rows.length){ $("weekTable").innerHTML=`<tbody><tr><td class="muted" style="white-space:normal;border:0">この週の記録はまだありません。上の曜日を選んで入力してください。</td></tr></tbody>`; return; }
+  $("weekTable").innerHTML=`<thead><tr><th class="name"></th>${days.map(d=>`<th>${wd(d)}<br><span style="font-weight:400">${md_(d)}</span></th>`).join("")}</tr></thead><tbody>`
+    +rows.map(([label,cells])=>`<tr><td class="name">${label}</td>${cells.map(c=>`<td class="${c&&c.hi?"hi":""} ${c&&c.wrap?"wrap":"c"}">${c?(c.raw?c.t:esc(c.t)):""}</td>`).join("")}</tr>`).join("")+`</tbody>`;
+}
+/* ---------- グラフ ---------- */
+const num=v=>{ const n=Number(String(v??"").replace(/,/g,"")); return String(v??"").trim()!==""&&!Number.isNaN(n)?n:null; };
+function svgChart(days,o){ // o: {series:[{name,color,pts:[{d,v}],line,dash}], refs:[{v,label}], ranges:[{d,lo,hi}], bars:[{d,v}], barColor}
+  const W=720,H=300,L=58,R=16,T=18,B=46, n=days.length, idx=Object.fromEntries(days.map((d,i)=>[d,i]));
+  const all=[...o.series.flatMap(s=>s.pts.map(p=>p.v)),...(o.refs||[]).map(r=>r.v),...(o.ranges||[]).flatMap(r=>[r.lo,r.hi]),...(o.bars||[]).map(b=>b.v)].filter(v=>v!=null);
+  let lo=o.bars?0:Math.min(...all), hi=Math.max(...all); const pad=(hi-lo||Math.abs(hi)||1)*0.1; if(!o.bars) lo-=pad; hi+=pad;
+  const x=i=>n===1?(L+W-R)/2:L+(W-L-R)*(i+0.5)/n, y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  let g=`<svg viewBox="0 0 ${W} ${H}" style="width:100%" role="img"><rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="#fbfcfc" stroke="#d7dee3"/>`;
+  for(let k=0;k<=4;k++){ const v=lo+(hi-lo)*k/4; g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e4e9ec"/><text x="${L-6}" y="${y(v)+5}" text-anchor="end" font-size="13" fill="#56646e">${Math.abs(hi-lo)<8?+v.toFixed(1):Math.round(v)}</text>`; }
+  const step=Math.max(1,Math.ceil(n/8));
+  days.forEach((d,i)=>{ if(i%step===0||n<=8) g+=`<text x="${x(i)}" y="${H-B+18}" text-anchor="middle" font-size="12" fill="#56646e">${md_(d)}</text>${n<=8?`<text x="${x(i)}" y="${H-B+34}" text-anchor="middle" font-size="12" fill="#56646e">${wd(d)}</text>`:""}`; });
+  for(const r of o.refs||[]) g+=`<line x1="${L}" x2="${W-R}" y1="${y(r.v)}" y2="${y(r.v)}" stroke="#c98a00" stroke-dasharray="6 4"/><text x="${L+6}" y="${y(r.v)-5}" font-size="12" fill="#7a4f00" stroke="#fbfcfc" stroke-width="4" paint-order="stroke">${esc(r.label)}</text>`;
+  const bw=Math.max(3,Math.min(26,(W-L-R)/n*0.6));
+  for(const b of o.bars||[]) g+=`<rect x="${x(idx[b.d])-bw/2}" y="${y(b.v)}" width="${bw}" height="${y(0)-y(b.v)}" fill="${o.barColor||"#0f6e6e"}"/>`;
+  for(const r of o.ranges||[]) g+=`<line x1="${x(idx[r.d])}" x2="${x(idx[r.d])}" y1="${y(r.hi)}" y2="${y(r.lo)}" stroke="#9fb0b9" stroke-width="5" stroke-linecap="round"/>`;
+  const rad=n>60?2:n>31?3:4.5;
+  for(const s of o.series){ const pts=s.pts.slice().sort((a,b)=>a.d<b.d?-1:1);
+    if(s.line&&pts.length>1) g+=`<polyline fill="none" stroke="${s.color}" stroke-width="2.5" ${s.dash?'stroke-dasharray="7 4"':""} points="${pts.map(p=>x(idx[p.d])+","+y(p.v)).join(" ")}"/>`;
+    for(const p of pts) g+=`<circle cx="${x(idx[p.d])}" cy="${y(p.v)}" r="${rad}" fill="${s.hollow?"#fff":s.color}" stroke="${s.color}" stroke-width="2"/>`; }
+  return g+`</svg>`;
+}
+function renderGraphs(){
+  const p=person(), sel=$("gRange").value, end=sel==="week"?addDays(wk,6):todayIso(), nDays=sel==="week"?7:+sel, start=addDays(end,-(nDays-1));
+  const days=Array.from({length:nDays},(_,i)=>addDays(start,i)), R=d=>p.daily[d]||{};
+  $("graphPrintHead").textContent=`毎日の健康記録のグラフ　${p.name}　${start} 〜 ${end}`;
+  const avg=a=>a.length?Math.round(a.reduce((s,v)=>s+v,0)/a.length*10)/10:null, vals=pts=>pts.map(q=>q.v);
+  const slotPts=(keys,f)=>days.flatMap(d=>keys.map(k=>num((((R(d).m)||{})[k]||{})[f])).filter(v=>v!=null).map(v=>({d,v})));
+  const dayMean=(f)=>days.map(d=>{ const v=SLOTS.map(([k])=>num((((R(d).m)||{})[k]||{})[f])).filter(x=>x!=null); return v.length?{d,v:avg(v)}:null; }).filter(Boolean);
+  const legend=items=>`<p class="legend2">${items.map(([c,t,st])=>`<span><i style="background:${st==="hollow"?"#fff":c};border-color:${c}"></i>${esc(t)}</span>`).join("")}</p>`;
+  const cards=[];
+  const amS=slotPts(["am"],"sys"), amD=slotPts(["am"],"dia"), evS=slotPts(["pm","bed"],"sys"), evD=slotPts(["pm","bed"],"dia"), noS=slotPts(["noon"],"sys"), noD=slotPts(["noon"],"dia");
+  if(amS.length+evS.length+noS.length+amD.length+evD.length+noD.length){
+    const hiDays=new Set([...amS,...evS,...noS].filter(q=>q.v>=135).map(q=>q.d).concat([...amD,...evD,...noD].filter(q=>q.v>=85).map(q=>q.d))).size;
+    cards.push(`<div class="card"><h2>血圧 <span class="muted">mmHg</span></h2>${svgChart(days,{series:[{name:"上 朝",color:"#c8452c",pts:amS,line:true},{name:"上 夕・寝る前",color:"#c8452c",pts:evS,line:true,dash:true,hollow:true},{name:"上 昼",color:"#c8452c",pts:noS,hollow:true},{name:"下 朝",color:"#1f6fb5",pts:amD,line:true},{name:"下 夕・寝る前",color:"#1f6fb5",pts:evD,line:true,dash:true,hollow:true},{name:"下 昼",color:"#1f6fb5",pts:noD,hollow:true}],refs:[{v:135,label:"上の目安 135"},{v:85,label:"下の目安 85"}]})}
+      ${legend([["#c8452c","上（朝）"],["#c8452c","上（夕・寝る前・昼）","hollow"],["#1f6fb5","下（朝）"],["#1f6fb5","下（夕・寝る前・昼）","hollow"]])}
+      <p>朝の平均 <b>${avg(vals(amS))??"—"} / ${avg(vals(amD))??"—"}</b>　夕・寝る前の平均 <b>${avg(vals(evS))??"—"} / ${avg(vals(evD))??"—"}</b>　135/85以上の日 <b>${hiDays}日</b></p></div>`); }
+  const gF=days.flatMap(d=>SLOTS.map(([k])=>(((R(d).m)||{})[k]||{})).filter(s=>num(s.glu)!=null&&s.gt!=="食後").map(s=>({d,v:num(s.glu)})));
+  const gP=days.flatMap(d=>SLOTS.map(([k])=>(((R(d).m)||{})[k]||{})).filter(s=>num(s.glu)!=null&&s.gt==="食後").map(s=>({d,v:num(s.glu)})));
+  const gR=days.filter(d=>num(R(d).gmax)!=null&&num(R(d).gmin)!=null).map(d=>({d,lo:num(R(d).gmin),hi:num(R(d).gmax)}));
+  if(gF.length+gP.length+gR.length) cards.push(`<div class="card"><h2>血糖値 <span class="muted">mg/dL</span></h2>${svgChart(days,{series:[{name:"空腹時・食前",color:"#0f6e6e",pts:gF,line:true},{name:"食後",color:"#c27a00",pts:gP,hollow:true}],ranges:gR})}
+      ${legend([["#0f6e6e","空腹時・食前（指定なしを含む）"],["#c27a00","食後","hollow"],["#9fb0b9","1日の最高〜最低（灰色の縦線）"]])}
+      <p>空腹時・食前の平均 <b>${avg(vals(gF))??"—"}</b>　食後の平均 <b>${avg(vals(gP))??"—"}</b></p></div>`);
+  const pu=dayMean("pulse"), pR=days.filter(d=>num(R(d).pmax)!=null&&num(R(d).pmin)!=null).map(d=>({d,lo:num(R(d).pmin),hi:num(R(d).pmax)}));
+  if(pu.length+pR.length) cards.push(`<div class="card"><h2>脈拍 <span class="muted">回/分</span></h2>${svgChart(days,{series:[{name:"脈拍",color:"#7a4fb5",pts:pu,line:true}],ranges:pR})}
+      ${legend([["#7a4fb5","その日の測定の平均"],["#9fb0b9","1日の最高〜最低（灰色の縦線）"]])}<p>平均 <b>${avg(vals(pu))??"—"}</b></p></div>`);
+  const we=days.map(d=>num(R(d).weight)!=null?{d,v:num(R(d).weight)}:null).filter(Boolean);
+  if(we.length) cards.push(`<div class="card"><h2>体重 <span class="muted">kg</span></h2>${svgChart(days,{series:[{name:"体重",color:"#0f6e6e",pts:we,line:true}]})}<p>最初 <b>${we[0].v}</b> → 最後 <b>${we[we.length-1].v}</b>（${we.length>1?((we[we.length-1].v-we[0].v>=0?"+":"")+(Math.round((we[we.length-1].v-we[0].v)*10)/10)+" kg"):"1回のみ"}）</p></div>`);
+  const st=days.map(d=>num(R(d).steps)!=null?{d,v:num(R(d).steps)}:null).filter(Boolean);
+  if(st.length) cards.push(`<div class="card"><h2>歩数 <span class="muted">歩</span></h2>${svgChart(days,{series:[],bars:st})}<p>記録した日の平均 <b>${Math.round(avg(vals(st)))}歩</b>（${st.length}日）</p></div>`);
+  if(p.habits.length){ const rows=p.habits.map(h=>[h,days.filter(d=>((R(d).habits)||[]).includes(h)).length]).filter(r=>r[1]);
+    if(rows.length) cards.push(`<div class="card"><h2>健康のために行ったこと <span class="muted">${nDays}日のうち行った日数</span></h2>${rows.map(([h,c])=>`<div class="hbar"><span>${esc(h)}</span><div><i style="width:${Math.round(c/nDays*100)}%"></i></div><b>${c}日</b></div>`).join("")}</div>`); }
+  $("graphs").innerHTML=cards.join("")||`<div class="msg warn">この期間の記録がまだありません。「今週の記録」で入力すると、ここにグラフが出ます。</div>`;
+}
+$("gRange").onchange=renderGraphs;
+
+function dailyText(p,nDays){
+  const from=addDays(todayIso(),-(nDays-1)), lines=[];
+  for(const d of Object.keys(p.daily).sort()){ if(d<from) continue; const r=p.daily[d]; if(recEmpty(r)) continue; const parts=[];
+    const ms=SLOTS.map(([k,label])=>{ const s=(r.m||{})[k]; if(!s||!Object.values(s).some(Boolean)) return ""; const a=[];
+      if(s.sys||s.dia) a.push(`血圧${s.sys||"?"}/${s.dia||"?"}`); if(s.pulse) a.push(`脈拍${s.pulse}`); if(s.glu) a.push(`血糖${s.glu}${s.gt?`(${s.gt})`:""}`);
+      return a.length?`${label}${s.t?s.t:""} ${a.join(" ")}`:""; }).filter(Boolean);
+    if(ms.length) parts.push("測定: "+ms.join("; "));
+    if(r.gmax||r.gmin) parts.push(`1日の血糖 最高${r.gmax||"?"}/最低${r.gmin||"?"}`);
+    if(r.pmax||r.pmin) parts.push(`1日の脈拍 最高${r.pmax||"?"}/最低${r.pmin||"?"}`);
+    if(r.weight) parts.push(`体重${r.weight}kg`); if(r.steps) parts.push(`歩数${r.steps}歩`);
+    const me=MEALS.map(([k,label])=>{ const s=(r.meals||{})[k]; return s&&(s.x||s.t)?`${label}${s.t?s.t:""} ${s.x||""}`.trim():""; }).filter(Boolean);
+    if(me.length) parts.push("食事: "+me.join("; "));
+    if((r.habits||[]).length) parts.push("行った健康習慣: "+r.habits.join("、"));
+    for(const [k,label] of [["sport","運動"],["out","外出"],["home","家で"],["memo","体調"]]) if(r[k]) parts.push(`${label}: ${r[k]}`);
+    lines.push(`${d}(${wd(d)}) ${parts.join(" | ")}`);
+  }
+  return lines.join("\n");
+}
+
+/* ---------- 相談文 ---------- */
+function ageOn(ym,date){ const b=(ym||"").split("-").map(Number), d=(date||"").split("-").map(Number); if(b.length<2||d.length<2||b.some(Number.isNaN)||!b[0]) return null; return d[0]-b[0]-(d[1]<b[1]?1:0); }
+function tableText(p,limit=10){
+  const cs=p.checkups.slice(-limit); if(!cs.length) return "（健診データなし）";
+  const lines=["項目 | 単位 | 基準値 | "+cs.map(c=>c.date).join(" | ")];
+  for(const it of ITEMS()){ const cells=cs.map(c=>{ const v=c.values[it.name]||"", f=judge(it,v); return v?v+(f?`(${f})`:""):"-"; }); if(cells.some(c=>c!=="-")) lines.push(`${it.name} | ${it.unit||"-"} | ${it.ref} | ${cells.join(" | ")}`); }
+  lines.push("（H=基準値より高い、または陽性。L=低い）");
+  for(const c of cs){ const ex=Object.entries(c.findings||{}).map(([k,v])=>`${k}: ${v}`); if(c.notes) ex.push(`本人メモ: ${c.notes}`); if(ex.length) lines.push(`[${c.date}] `+ex.join(" / ")); }
+  return lines.join("\n");
+}
+const COMMON_RULE="専門用語にはやさしい言い換えを添え、高齢の方にも読みやすい文章にしてください。診断を断定せず、医療機関への受診や主治医への相談が必要な点は理由とともに明示してください。薬やサプリメントに触れる場合は一般的な情報にとどめ、開始・中止・変更は医師に相談するよう添えてください。";
+function consultPrompt(kind,p,doc,concern,prev,nDays){
+  const refDate=kind==="y"&&p.checkups.length?p.checkups[p.checkups.length-1].date:todayIso(), age=ageOn(p.birth_ym,refDate);
+  let system=`あなたは${doc.role}です。${doc.focus}\n`, prompt=`【対象者】${p.sex||""}${age!=null?`、${age}歳`:""}\n${healthText(p)}\n\n`;
+  if(kind==="y"){
+    system+="毎年の特定健康診査の結果をもとに、本人に向けて今後の健康管理の助言を日本語で行います。"+COMMON_RULE;
+    prompt+=`【特定健診の結果（古い順）】\n${tableText(p)}\n\n【本人が特に今気になっている点】\n${concern.trim()||"（特になし）"}\n\n`;
+  }else{
+    system+="本人が家庭で毎日つけている記録（血圧・脈拍・血糖値、食事、運動や外出など）をもとに、本人に向けて日々の健康管理の助言を日本語で行います。記録のない日や項目は、責めずに、分かる範囲で助言してください。"+COMMON_RULE;
+    prompt+=`【毎日の記録（直近${nDays}日、古い順）】\n${dailyText(p,nDays)}\n\n【特定健診の結果（直近3回、参考）】\n${tableText(p,3)}\n\n【本人が気になっていること・相談したいこと】\n${concern.trim()||"（特になし）"}\n\n`;
+  }
+  if(prev) prompt+=`【前回（${prev.created_at.slice(0,10)}）のあなたの助言の要旨】\n${prev.answer.slice(0,3000)}\n前回からの変化と、助言の継続・見直し点にも触れてください。\n\n`;
+  prompt+=kind==="y"
+    ?"次の見出しで、Markdownで回答してください。\n## 総合所見\n（この立場から見た全体像を3〜5行）\n## 気になる点への回答\n（本人が挙げた点に最初に、具体的に答える）\n## 検査項目ごとの所見\n（基準値を外れた項目と、推移に注意が必要な項目。数値と年次変化を引用する）\n## 改善すべき点と具体的な方法\n（優先順位をつけ、食事・運動・生活習慣などを実行できる形で）\n## 医療機関に相談すべき点\n（受診の目安、追加で受けるとよい検査）\n## 次回健診までの目標\n（数値目標を3つ程度）"
+    :"次の見出しで、Markdownで回答してください。\n## 総合所見\n（この期間の全体像を3〜5行）\n## 気になる点への回答\n（本人が挙げた点に最初に、具体的に答える）\n## 血圧・脈拍・血糖値の見かた\n（記録された数値と日時を引用し、高い日・低い日の傾向と、食事や活動との関係）\n## 食事と活動について\n（よい点を先に、次に見直すとよい点）\n## 続けるとよいこと・見直すとよいこと\n（優先順位をつけ、明日から実行できる形で3つ程度）\n## 医療機関に相談すべき点\n（受診の目安。急いだほうがよい数値や症状があれば最初に書く）";
+  return {system,prompt};
+}
+
+/* ---------- Markdown ---------- */
+function md(src){
+  const inl=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g,"$1<em>$2</em>");
+  const lines=String(src||"").replace(/\r/g,"").split("\n"); let out="", list="", para=[], i=0;
+  const flushP=()=>{ if(para.length){ out+="<p>"+para.map(inl).join("<br>")+"</p>"; para=[]; } };
+  const flushL=()=>{ if(list){ out+=`</${list}>`; list=""; } };
+  while(i<lines.length){ const line=lines[i]; let m;
+    if(/^\s*$/.test(line)){ flushP(); flushL(); }
+    else if((m=line.match(/^(#{1,6})\s+(.*)$/))){ flushP(); flushL(); const lv=Math.min(4,Math.max(2,m[1].length)); out+=`<h${lv}>${inl(m[2])}</h${lv}>`; }
+    else if(/^\s*([-*_])\1{2,}\s*$/.test(line)){ flushP(); flushL(); out+="<hr>"; }
+    else if(/^\s*\|.*\|\s*$/.test(line)){ flushP(); flushL(); const rows=[]; while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i])){ rows.push(lines[i].trim().slice(1,-1).split("|").map(c=>c.trim())); i++; }
+      out+="<div class='scroll'><table>"+rows.filter(r=>!r.every(c=>/^:?-{2,}:?$/.test(c))).map((r,ri)=>"<tr>"+r.map(c=>ri===0?`<th>${inl(c)}</th>`:`<td>${inl(c)}</td>`).join("")+"</tr>").join("")+"</table></div>"; continue; }
+    else if((m=line.match(/^\s*(?:[-*+•]|(\d+)[.)])\s+(.*)$/))){ flushP(); const kind=m[1]?"ol":"ul"; if(list!==kind){ flushL(); out+=`<${kind}>`; list=kind; } out+=`<li>${inl(m[2])}</li>`; }
+    else { flushL(); para.push(line.trim()); }
+    i++; }
+  flushP(); flushL(); return out;
+}
+
+const answerHtml=c=>`<div class="meta">${esc(c.created_at)}　${esc(c.provider)} / ${esc(c.model)}　${esc(c.basis||(c.latest_checkup?`健診 ${c.latest_checkup} まで`:""))}<br>気になる点: ${esc(c.concern||"（なし）")}</div><div class="answer">${md(c.answer)}</div><p class="muted">${DISCLAIMER}</p>`;
+
+/* ---------- AIに相談・見比べる（特定健診 y / 毎日の記録 d 共通） ---------- */
+const KIND={y:{list:"consultations",concern:"concern"},d:{list:"daily_consults",concern:"daily_concern"}};
+const listOf=k=>person()[KIND[k].list];
+const latestOf=(k,doc)=>[...listOf(k)].reverse().find(c=>c.doctor===doc);
+function renderAsk(k){
+  setAiNotes();
+  $(k+"AskGrid").innerHTML=CATALOG.doctors.map((d,i)=>{ const st=askState[pid+k+d.id]||{}, c=latestOf(k,d.id);
+    return `<div class="doc d${i}"><h3>${d.icon} ${esc(d.name)}</h3><div class="focus">${esc(d.focus)}</div>
+    <div class="row noprint" style="margin:.5rem 0"><button class="btn primary" data-ask="${d.id}" ${st.busy?"disabled":""}>この先生に聞く</button>${st.busy?`<span><span class="spin"></span>聞いています…（1〜2分かかります）</span>`:""}</div>
+    ${st.error?`<div class="msg err">${esc(st.error)}</div>`:""}${c?answerHtml(c):`<p class="muted">まだ回答がありません。</p>`}</div>`; }).join("");
+}
+async function ask(k,ids){
+  const who=pid, p=person();
+  if(dirty) commitDraft(), saveDB(), setDirty(false);
+  if(dayTimer) dayCommit();
+  const nDays=+$("dDays").value;
+  if(k==="y"&&!p.checkups.length){ flash("健診データがまだありません。先に「健診票を読み取る」か手入力で登録してください。","warn"); return; }
+  if(k==="d"&&!dailyText(p,nDays)){ flash("この期間の毎日の記録がまだありません。先に「今週の記録」で入力してください。","warn"); return; }
+  let ai; if(!(await guard(async()=>{ ai=await currentAI(); }))) return;
+  const round=newId(), concern=$(k+"Concern").value, usePrev=$(k+"UsePrev").checked;
+  p[KIND[k].concern]=concern; for(const d of ids) askState[who+k+d]={busy:true}; $(k+"AskAll").disabled=true; renderAsk(k);
+  await Promise.all(ids.map(async id=>{
+    const doc=CATALOG.doctors.find(d=>d.id===id), prev=usePrev?[...p[KIND[k].list]].reverse().find(c=>c.doctor===id):null;
+    try{ const q=consultPrompt(k,p,doc,concern,prev,nDays), answer=await generate(ai,q.prompt,[],q.system);
+      p[KIND[k].list].push({id:newId(),created_at:now(),round_id:round,doctor:id,doctor_name:doc.name,provider:provName(ai.provider),model:ai.model,concern,
+        latest_checkup:k==="y"?p.checkups[p.checkups.length-1].date:"",basis:k==="y"?`健診 ${p.checkups[p.checkups.length-1].date} まで`:`毎日の記録 直近${nDays}日`,answer});
+      askState[who+k+id]={}; saveDB();
+    }catch(err){ askState[who+k+id]={error:err.message}; }
+    if(pid===who){ renderAsk(k); renderCompare(k); }
+  }));
+  $(k+"AskAll").disabled=false; renderGuide();
+  if(ids.some(d=>!askState[who+k+d].error)){ for(const d of CATALOG.doctors) delete compareSel[k+d.id]; renderCompare(k); flash("回答を保存しました。「回答を見比べる」で並べて読めます。"); }
+}
+function renderCompare(k){
+  const p=person(), all=[...listOf(k)].reverse(), rounds=[];
+  for(const c of all){ const key=c.round_id||c.id; let r=rounds.find(x=>x.key===key); if(!r){ r={key,date:c.created_at,concern:c.concern,n:0}; rounds.push(r); } r.n++; }
+  const sel=$(k+"RoundSel"), keep=sel.value;
+  sel.innerHTML=`<option value="">（先生ごとに最新）</option>`+rounds.map(r=>`<option value="${esc(r.key)}">${esc(r.date.slice(0,16))}　${r.n}人　${esc((r.concern||"").slice(0,20))}</option>`).join("");
+  if(rounds.some(r=>r.key===keep)) sel.value=keep;
+  $(k+"PrintHead").textContent=`AI健康相談の回答（${k==="y"?"特定健診":"毎日の健康記録"}）　${p.name}`;
+  $(k+"CompareGrid").className="docgrid"+($(k+"LayoutSel").value==="2"?" two":"");
+  $(k+"CompareGrid").innerHTML=CATALOG.doctors.map((d,i)=>{ const mine=all.filter(c=>c.doctor===d.id), cur=mine.find(c=>c.id===compareSel[k+d.id])||mine[0];
+    return `<div class="doc d${i} ${cur?"":"hideprint"}"><h3>${d.icon} ${esc(d.name)}</h3>
+    <div class="row noprint" style="margin:.4rem 0">${mine.length?`<select data-doc="${d.id}" style="max-width:100%">${mine.map(c=>`<option value="${esc(c.id)}" ${c.id===cur.id?"selected":""}>${esc(c.created_at.slice(0,16))}</option>`).join("")}</select><button class="link" data-delans="${esc(cur.id)}">この回答を消す</button>`:""}</div>
+    ${cur?answerHtml(cur):`<p class="muted">この先生の回答はまだありません。「AIに相談」から聞いてください。</p>`}</div>`; }).join("");
+}
+for(const k of ["y","d"]){
+  $(k+"AskGrid").onclick=e=>{ if(e.target.dataset.ask) ask(k,[e.target.dataset.ask]); };
+  $(k+"AskAll").onclick=()=>ask(k,CATALOG.doctors.map(d=>d.id));
+  $(k+"CompareGrid").onchange=e=>{ if(e.target.dataset.doc){ compareSel[k+e.target.dataset.doc]=e.target.value; $(k+"RoundSel").value=""; renderCompare(k); } };
+  $(k+"CompareGrid").onclick=e=>{ const id=e.target.dataset.delans; if(id&&confirm("この回答を消しますか？")){ const p=person(); p[KIND[k].list]=p[KIND[k].list].filter(c=>c.id!==id); saveDB(); renderCompare(k); renderAsk(k); } };
+  $(k+"RoundSel").onchange=e=>{ const key=e.target.value; for(const d of CATALOG.doctors){ const c=listOf(k).find(x=>(x.round_id||x.id)===key&&x.doctor===d.id); if(key&&c) compareSel[k+d.id]=c.id; else delete compareSel[k+d.id]; } renderCompare(k); };
+  $(k+"LayoutSel").onchange=()=>renderCompare(k);
+}
+
+/* ---------- 設定 ---------- */
+function renderSettings(){
+  $("fontRow").innerHTML=[["m","ふつう"],["l","大きい"],["xl","とても大きい"]].map(([k,t])=>`<button class="btn ${CFG.font===k?"primary":""}" data-font="${k}">${t}</button>`).join("");
+  if(!$("keyRows").contains(document.activeElement))
+    $("keyRows").innerHTML=PROVIDERS.map(p=>`<div class="keyrow"><span>${esc(p.name)} <span class="pill ${CFG.keys[p.id]?"ok":""}">${CFG.keys[p.id]?"入力済み":"未入力"}</span></span><input type="password" autocomplete="off" data-key="${p.id}" value="${esc(CFG.keys[p.id]||"")}" placeholder="キーを貼り付け"><button class="btn" data-savekey="${p.id}">保存して確かめる</button><button class="link" data-show="${p.id}">表示</button></div><div class="muted" id="kmsg-${p.id}"></div>`).join("");
+  const prov=CFG.provider||"", list=prov?modelCache[prov]:null, model=prov?CFG.models[prov]||"":"";
+  $("picker").innerHTML=`<label>AI <select id="provSel"><option value="">自動（キーのあるAI）</option>${PROVIDERS.map(p=>`<option value="${p.id}" ${p.id===prov?"selected":""}>${esc(p.name)}${CFG.keys[p.id]?"":"（キー未入力）"}</option>`).join("")}</select></label>`
+    +(prov?`<label>種類 <select id="modelSel">${[...new Set([model,...(list||[])].filter(Boolean))].map(m=>`<option ${m===model?"selected":""}>${esc(m)}</option>`).join("")||"<option value=''>（一覧を更新してください）</option>"}</select></label><button class="btn" id="modelReload">一覧を更新</button>`:"");
+  $("provSel").onchange=e=>{ CFG.provider=e.target.value; saveCfg(); renderSettings(); setAiNotes(); if(CFG.provider&&CFG.keys[CFG.provider]) loadModels(); };
+  if($("modelSel")) $("modelSel").onchange=e=>{ CFG.models[prov]=e.target.value; saveCfg(); setAiNotes(); };
+  if($("modelReload")) $("modelReload").onclick=()=>loadModels(true);
+  $("lastBackup").textContent=CFG.lastBackup?`最後に控えを保存した日: ${CFG.lastBackup}`:"まだ控えを保存していません。";
+}
+async function loadModels(force){ const prov=CFG.provider; if(!prov) return; await guard(async()=>{ if(force||!modelCache[prov]) modelCache[prov]=await listModels(prov); if(!modelCache[prov].includes(CFG.models[prov])){ CFG.models[prov]=recommend(prov,modelCache[prov]); saveCfg(); } renderSettings(); setAiNotes(); }); }
+$("fontRow").onclick=e=>{ if(e.target.dataset.font){ CFG.font=e.target.dataset.font; saveCfg(); refresh(true); } };
+$("keyRows").onclick=async e=>{
+  const d=e.target.dataset;
+  if(d.show){ const inp=$("keyRows").querySelector(`input[data-key=${d.show}]`); inp.type=inp.type==="password"?"text":"password"; e.target.textContent=inp.type==="password"?"表示":"隠す"; }
+  if(d.savekey){ const prov=d.savekey, val=$("keyRows").querySelector(`input[data-key=${prov}]`).value.trim(), msg=$("kmsg-"+prov);
+    CFG.keys[prov]=val; delete modelCache[prov]; saveCfg(); document.activeElement.blur();
+    if(!val){ renderSettings(); setAiNotes(); renderGuide(); flash("キーを消しました。"); return; }
+    msg.innerHTML=`<span class="spin"></span>確かめています…`;
+    try{ modelCache[prov]=await listModels(prov); CFG.models[prov]=modelCache[prov].includes(CFG.models[prov])?CFG.models[prov]:recommend(prov,modelCache[prov]); saveCfg(); renderSettings(); $("kmsg-"+prov).innerHTML=`<span class="pill ok">使えます</span> 使うAIの種類: ${esc(CFG.models[prov])}`; }
+    catch(err){ renderSettings(); $("kmsg-"+prov).innerHTML=`<span class="pill ng">使えませんでした</span> ${esc(err.message)}`; }
+    setAiNotes(); renderGuide(); }
+};
+
+/* ---------- 控え（特定健診データ／日常健康データを別ファイルで） ---------- */
+function download(name,text,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+const stamp=()=>todayIso().replace(/-/g,"");
+const PROFILE=["id","name","birth_ym","sex","conditions","cond_other","meds","habits","health_done"];
+function exportData(kind){
+  const keys=kind==="yearly"?["concern","checkups","consultations"]:["daily","daily_concern","daily_consults"];
+  return {schema:"helthchk_yearly_v3",kind,updated_at:DB.updated_at||now(),custom_items:kind==="yearly"?DB.custom_items:[],
+    people:DB.people.map(p=>Object.fromEntries([...PROFILE,...keys].map(k=>[k,p[k]])))};
+}
+function flushEdits(){ if(dirty) commitDraft(), saveDB(), setDirty(false); if(dayTimer) dayCommit(); }
+function backedUp(){ CFG.lastBackup=todayIso(); saveCfg(); renderSettings(); flash("ファイルを保存しました（「ダウンロード」フォルダーに入ります）。"); }
+$("expY").onclick=()=>{ flushEdits(); download(`特定健診データ_${stamp()}.json`,JSON.stringify(exportData("yearly"),null,1),"application/json"); backedUp(); };
+$("expD").onclick=()=>{ flushEdits(); download(`日常健康データ_${stamp()}.json`,JSON.stringify(exportData("daily"),null,1),"application/json"); backedUp(); };
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=()=>guard(async()=>{
+  const f=$("importFile").files[0]; if(!f) return; const text=await f.text(); $("importFile").value="";
+  let d; try{ d=normalize(JSON.parse(text)) }catch(e){} if(!d) throw new Error("このファイルは健康ノートの控えではないようです。");
+  const empty=DB.people.every(isEmptyPerson);
+  if(!empty&&!confirm("いまのデータに、ファイルの内容を足し合わせます。よろしいですか？")) return;
+  flushEdits(); DB=empty?d:merge(DB,d); pid=""; saveDB(); refresh(); showTab(TABS[CFG.mode][0][0]); flash("ファイルから読み込みました。");
+});
+const cell=v=>{ const t=String(v??""); const n=Number(t); if(t!==""&&!Number.isNaN(n)) return n; return /^[=+\-@]/.test(t)?"'"+t:t; };
+function tables(){
+  const wide=[], long=[["氏名","健診日","年度","分類","検査項目","値","単位","基準値","判定","実施機関"]], hd=["日時","氏名","医師の立場","AI","モデル","気になる点","もとにした記録","回答"], ans=[hd], dans=[hd];
+  const dh=["氏名","日付","曜日"]; for(const [,l] of SLOTS) dh.push(`${l} 時刻`,`${l} 血圧上`,`${l} 血圧下`,`${l} 脈拍`,`${l} 血糖値`,`${l} 血糖の時`);
+  dh.push("血糖 最高","血糖 最低","脈拍 最高","脈拍 最低","体重kg","歩数"); for(const [,l] of MEALS) dh.push(`${l} 時刻`,l); dh.push("行った健康習慣","運動","外出","家で","体調");
+  const daily=[dh];
+  for(const p of DB.people){ const cs=p.checkups;
+    wide.push([`■ ${p.name}`,p.birth_ym,p.sex,cell(healthText(p).replace(/\n/g,"　"))]); wide.push(["分類","検査項目","単位","基準値",...cs.map(c=>c.date)]);
+    for(const it of ITEMS()){ const vs=cs.map(c=>c.values[it.name]||""); if(!vs.some(Boolean)) continue;
+      wide.push([it.group,it.name,it.unit,it.ref,...vs.map(cell)]);
+      cs.forEach((c,i)=>{ if(vs[i]) long.push([p.name,c.date,c.date.slice(0,4),it.group,it.name,cell(vs[i]),it.unit,it.ref,judge(it,vs[i]),c.facility||""]); }); }
+    for(const f of [...CATALOG.findings,"メモ"]){ const r=cs.map(c=>cell(f==="メモ"?c.notes:c.findings[f]||"")); if(r.some(Boolean)) wide.push(["所見",f,"","",...r]); }
+    wide.push([]);
+    const arow=c=>[c.created_at,p.name,c.doctor_name,c.provider,c.model,cell(c.concern||""),c.basis||c.latest_checkup||"",cell(c.answer.slice(0,49000))];
+    for(const c of p.consultations) ans.push(arow(c)); for(const c of p.daily_consults) dans.push(arow(c));
+    for(const d of Object.keys(p.daily).sort()){ const r=p.daily[d]; if(recEmpty(r)) continue; const row=[p.name,d,wd(d)];
+      for(const [k] of SLOTS){ const s=(r.m||{})[k]||{}; row.push(s.t||"",cell(s.sys),cell(s.dia),cell(s.pulse),cell(s.glu),s.gt||""); }
+      row.push(cell(r.gmax),cell(r.gmin),cell(r.pmax),cell(r.pmin),cell(r.weight),cell(r.steps));
+      for(const [k] of MEALS){ const s=(r.meals||{})[k]||{}; row.push(s.t||"",cell(s.x)); }
+      row.push((r.habits||[]).join("、"),cell(r.sport),cell(r.out),cell(r.home),cell(r.memo)); daily.push(row); }
+  }
+  const w=Math.max(1,...wide.map(r=>r.length));
+  return {"特定健診_年次表":wide.map(r=>[...r,...Array(w-r.length).fill("")]),"特定健診_データ":long,"特定健診_AI回答":ans,"毎日の記録_データ":daily,"毎日の記録_AI回答":dans};
+}
+const toCsv=rows=>"﻿"+rows.map(r=>r.map(v=>`"${String(v).replace(/^'/,"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+$("csvY").onclick=()=>{ flushEdits(); download(`特定健診データ_${stamp()}.csv`,toCsv(tables()["特定健診_データ"]),"text/csv"); };
+$("csvD").onclick=()=>{ flushEdits(); download(`日常健康データ_${stamp()}.csv`,toCsv(tables()["毎日の記録_データ"]),"text/csv"); };
+$("wipeBtn").onclick=()=>{ if(!confirm("この端末に保存した記録、AIの回答、AIのキーをすべて消します。元に戻せません。よろしいですか？")) return; if(!confirm("本当に消しますか？（控えのファイルを保存していない場合は、先に保存してください）")) return; localStorage.removeItem(LS_DATA); localStorage.removeItem(LS_CFG); location.reload(); };
+
+/* ---------- Google スプレッドシート連携 ---------- */
+function merge(a,b){ // a（手元）を優先しつつ、b にしかないものを足す
+  const out=JSON.parse(JSON.stringify(a));
+  for(const it of b.custom_items||[]) if(!out.custom_items.some(x=>x.name===it.name)&&!CATALOG.items.some(x=>x.name===it.name)) out.custom_items.push(it);
+  const byTime=(x,y)=>x.created_at<y.created_at?-1:1;
+  for(const bp of b.people||[]){
+    let ap=out.people.find(p=>p.id===bp.id)||out.people.find(p=>p.name&&p.name===bp.name);
+    if(!ap){ const blank=out.people.findIndex(isEmptyPerson); if(blank>=0) out.people.splice(blank,1); if(out.people.length<MAX_PEOPLE) out.people.push(bp); continue; }
+    for(const c of bp.checkups) if(!ap.checkups.some(x=>x.date===c.date)) ap.checkups.push(c);
+    ap.checkups.sort((x,y)=>x.date<y.date?-1:1);
+    for(const k of ["consultations","daily_consults"]){ for(const c of bp[k]) if(!ap[k].some(x=>x.id===c.id)) ap[k].push(c); ap[k].sort(byTime); }
+    for(const [d,r] of Object.entries(bp.daily)) if(!ap.daily[d]) ap.daily[d]=r;
+    for(const k of ["birth_ym","concern","daily_concern","cond_other"]) if(!ap[k]) ap[k]=bp[k];
+    for(const k of ["conditions","meds","habits"]) if(!ap[k].length) ap[k]=bp[k];
+    ap.health_done=ap.health_done||bp.health_done;
+  }
+  return normalize(out);
+}
+let cloudBusy=false, cloudMsg="", pushTimer=null;
+async function cloud(action,extra){
+  const [url,token]=CFG.gas.split("#"); let res;
+  try{ res=await fetch(url,{method:"POST",body:JSON.stringify({token:token||"",action,...extra})}); }catch(e){ throw new Error("スプレッドシートにつながりません。インターネットの接続をご確認ください。"); }
+  let r; try{ r=await res.json() }catch(e){ throw new Error("スプレッドシートから正しい返事がありません。接続コードと公開の設定をご確認ください。"); }
+  if(!r.ok&&!r.conflict) throw new Error("スプレッドシート連携のエラー: "+(r.error||"不明"));
+  return r;
+}
+function renderCloud(){
+  $("cloud").textContent=CFG.gas?(cloudBusy?"☁ 保存中…":cloudMsg||"☁ 連携中"):"";
+  $("cloudStatus").innerHTML=CFG.gas?`<span class="pill ok">接続しています</span> <span class="muted">${esc(cloudMsg)}</span><p class="muted">ほかの端末でも使うには、この接続コードを同じように貼り付けます。<br><button class="link" id="copyCode">接続コードをコピー</button></p>`:`<span class="pill">使っていません</span>`;
+  $("gasCode").style.display=$("gasConnect").style.display=CFG.gas?"none":""; $("gasSync").style.display=$("gasOff").style.display=CFG.gas?"":"none";
+  if($("copyCode")) $("copyCode").onclick=()=>navigator.clipboard.writeText(CFG.gas).then(()=>flash("接続コードをコピーしました。"),()=>dialog(`<p>下の文字をすべてコピーしてください。</p><textarea rows="4" readonly>${esc(CFG.gas)}</textarea>`));
+}
+async function pull(){
+  if(!CFG.gas||cloudBusy) return; cloudBusy=true; renderCloud(); let changed=false, ok=false;
+  try{ const r=await cloud("load"), remote=r.data?normalize(r.data):null;
+    if(!remote) CFG.cloudDirty=true;                       // スプレッドシートが空 → 手元のデータを送る
+    else if(r.rev!==CFG.cloudRev){
+      if(DB.people.every(isEmptyPerson)||!CFG.cloudDirty) DB=remote; else DB=merge(DB,remote);
+      store.set(LS_DATA,DB); CFG.cloudRev=r.rev; changed=true;
+    }
+    saveCfg(); cloudMsg="☁ 最新です"; ok=true;
+  }catch(err){ cloudMsg="☁ 保存できていません"; flash(err.message,"err",true); }
+  cloudBusy=false; if(changed) refresh(); renderCloud();
+  if(ok&&CFG.gas&&CFG.cloudDirty) await push();
+}
+async function push(){
+  if(!CFG.gas||cloudBusy) return; cloudBusy=true; renderCloud();
+  try{ let r=await cloud("save",{base:CFG.cloudRev,data:DB,tables:tables()});
+    if(r.conflict){ DB=merge(DB,normalize(r.data)||DB); store.set(LS_DATA,DB); r=await cloud("save",{base:r.rev,data:DB,tables:tables()}); if(r.conflict) throw new Error("ほかの端末と同時に保存しようとしました。少し待ってからもう一度お試しください。"); cloudBusy=false; refresh(true); }
+    CFG.cloudRev=r.rev; CFG.cloudDirty=false; saveCfg(); cloudMsg="☁ 保存済み "+now().slice(11,16);
+  }catch(err){ cloudMsg="☁ 保存できていません"; flash(err.message,"err",true); }
+  cloudBusy=false; renderCloud();
+}
+function schedulePush(){ clearTimeout(pushTimer); pushTimer=setTimeout(push,1500); }
+$("gasConnect").onclick=()=>guard(async()=>{
+  const code=$("gasCode").value.trim(); if(!/^https:\/\/script\.google\.com\/macros\/s\/[^#\s]+\/exec#\S+$/.test(code)) throw new Error("接続コードの形が正しくありません。「https://script.google.com/…/exec#合言葉」の形です。");
+  CFG.gas=code; CFG.cloudRev=null; CFG.cloudDirty=false;
+  try{ await cloud("load"); }catch(err){ CFG.gas=""; throw err; }
+  saveCfg(); $("gasCode").value=""; await pull(); flash("スプレッドシートに接続しました。");
+});
+$("gasSync").onclick=async()=>{ flushEdits(); await pull(); if(!CFG.cloudDirty) await push(); };
+$("gasOff").onclick=()=>{ if(!confirm("スプレッドシートとの接続をやめますか？（この端末とスプレッドシートのデータはどちらも残ります）")) return; CFG.gas=""; CFG.cloudRev=null; CFG.cloudDirty=false; saveCfg(); cloudMsg=""; renderCloud(); };
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&CFG.gas&&!dirty&&!dayTimer&&!$("dayForm").contains(document.activeElement)) pull(); });
+window.addEventListener("beforeunload",e=>{ if(dayTimer) dayCommit(); if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+if(!TABS[CFG.mode]) CFG.mode="yearly";
+refresh(); showTab(TABS[CFG.mode][0][0]); if(CFG.gas) pull();
+</script>
+</body>
+</html>
