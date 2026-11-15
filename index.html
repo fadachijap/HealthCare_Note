@@ -388,7 +388,7 @@ const PROVIDERS=[{id:"gemini",name:"Gemini（Google）"},{id:"anthropic",name:"C
 const CONDITIONS=["高血圧症","糖尿病","高血糖（糖尿病予備群）","脂質異常症（コレステロール・中性脂肪）","心臓の病気","脳卒中（脳梗塞・脳出血）","腎臓の病気","肝臓の病気","痛風・高尿酸血症","骨粗しょう症","貧血","がん","ぜんそく・肺の病気","不眠","便秘"];
 const HABITS=["ウォーキング","散歩","ジョギング","体操・ストレッチ","ラジオ体操","筋力トレーニング","水泳・水中運動","ゴルフ","グラウンドゴルフ","テニス","卓球","ヨガ","太極拳","ダンス","サイクリング","畑仕事・庭仕事"];
 const SLOTS=[["am","朝"],["noon","昼"],["pm","夕"],["bed","寝る前"]];
-const MEALS=[["b","朝食"],["l","昼食"],["d","夕食"],["s","おやつ"]];
+const MEALS=[["b","朝食"],["l","昼食"],["d","夕食"],["s","おやつ"],["o","その他"]];
 const WD=["月","火","水","木","金","土","日"];
 const LS_DATA="hc3_data", LS_CFG="hc3_cfg", MAX_PEOPLE=4, TIMEOUT=240000;
 const $=id=>document.getElementById(id);
@@ -413,6 +413,7 @@ const consults=a=>(a||[]).filter(c=>c&&c.answer).map(c=>({...c,id:String(c.id||n
 function normalize(d){
   if(!d||!Array.isArray(d.people)) return null;
   d.schema="helthchk_yearly_v3"; d.custom_items=Array.isArray(d.custom_items)?d.custom_items:[];
+  d.item_edits=(d.item_edits&&typeof d.item_edits==="object"&&!Array.isArray(d.item_edits))?d.item_edits:{};
   d.people=d.people.slice(0,MAX_PEOPLE).map(p=>{ const daily={};
     for(const [k,v] of Object.entries(p.daily||{})) if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==="object") daily[k]=v;
     return {id:String(p.id||newId()),name:String(p.name||""),birth_ym:String(p.birth_ym||p.birth_date||"").slice(0,7),sex:String(p.sex||"男性"),
@@ -430,7 +431,7 @@ const modelCache={}, askState={}, compareSel={};
 const saveCfg=()=>store.set(LS_CFG,CFG);
 function saveDB(){ DB.updated_at=now(); store.set(LS_DATA,DB); if(CFG.gas){ CFG.cloudDirty=true; saveCfg(); schedulePush(); } }
 const person=()=>DB.people.find(p=>p.id===pid)||DB.people[0];
-const ITEMS=()=>CATALOG.items.concat(DB.custom_items.map(i=>({...i,custom:true})));
+const ITEMS=()=>CATALOG.items.map(i=>({...i,...(DB.item_edits[i.name]||{})})).concat(DB.custom_items.map(i=>({...i,custom:true})));
 const itemOf=name=>ITEMS().find(i=>i.name===name);
 const isEmptyPerson=p=>!p.name&&!p.checkups.length&&!p.consultations.length&&!Object.keys(p.daily).length&&!p.daily_consults.length&&!p.meds.length&&!p.conditions.length;
 function judge(item,value){
@@ -583,7 +584,26 @@ function showItem(name){
     good.forEach((p,i)=>{ const f=judge(it,p.v); g+=`<circle cx="${x(i)}" cy="${y(p.v)}" r="6" fill="${f==="H"?"#c8452c":f==="L"?"#2a62b8":"#0f6e6e"}"/><text x="${x(i)}" y="${y(p.v)-12}" text-anchor="middle" font-size="16" font-weight="700">${p.v}</text><text x="${x(i)}" y="${H-B+20}" text-anchor="middle" font-size="14" fill="#56646e">${p.d.slice(0,4)}</text>`; });
     g+=`</svg><p class="muted">色のついた帯が基準値の範囲です。</p>`;
   }
-  dialog(`<h2>${esc(it.name)} <span class="muted">${esc(it.unit)}</span></h2><p>${esc(it.desc)}</p><p class="muted">基準値: ${esc(it.ref)}　国際的な目安: ${esc(it.intl||"—")}</p>${g}`);
+  const mgmt=(it.custom||it.group==="追加検査")?`<hr><h3 style="margin:.4rem 0">基準値の修正</h3>
+  <p><label>単位 <input type="text" id="eiUnit" value="${esc(it.unit)}" style="width:6rem"></label> <label>基準値の書き方 <input type="text" id="eiRef" value="${esc(it.ref)}" style="width:10rem"></label></p>
+  <p><label>下限 <input type="text" id="eiLo" value="${it.lo??""}" style="width:5rem"></label> <label>上限 <input type="text" id="eiHi" value="${it.hi??""}" style="width:5rem"></label> <span class="muted">下限・上限を入れると色分けに使われます</span></p>
+  <div class="row"><button class="btn primary" id="eiSave">基準値を保存</button>${it.custom?`<button class="btn" id="eiDel">この項目を消す</button>`:""}</div>
+  ${it.custom?`<p class="muted">「この項目を消す」を押すと、記録した値も一緒に消えます。</p>`:""}`:"";
+  dialog(`<h2>${esc(it.name)} <span class="muted">${esc(it.unit)}</span></h2><p>${esc(it.desc)}</p><p class="muted">基準値: ${esc(it.ref)}　国際的な目安: ${esc(it.intl||"—")}</p>${g}${mgmt}`);
+  if(mgmt){
+    $("eiSave").onclick=()=>guard(async()=>{
+      const num=v=>{ const n=parseFloat(v); return Number.isNaN(n)?null:n };
+      const ed={unit:$("eiUnit").value.trim(),ref:$("eiRef").value.trim()||"—",lo:num($("eiLo").value),hi:num($("eiHi").value)};
+      if(it.custom){ const ci=DB.custom_items.find(x=>x.name===it.name); if(ci) Object.assign(ci,ed); }
+      else DB.item_edits[it.name]=ed;
+      saveDB(); $("dlg").close(); refresh(true); flash("基準値を保存しました。");
+    });
+    if(it.custom) $("eiDel").onclick=()=>{ if(!confirm(`「${it.name}」を消しますか？ 記録した値も消えます。`)) return;
+      DB.custom_items=DB.custom_items.filter(x=>x.name!==it.name); delete DB.item_edits[it.name];
+      for(const p of DB.people) for(const c of p.checkups) delete c.values[it.name];
+      for(const c of draft) delete c.values[it.name];
+      saveDB(); $("dlg").close(); refresh(true); flash("項目を消しました。"); };
+  }
 }
 
 /* ---------- 対象者 ---------- */
@@ -608,7 +628,7 @@ function needKey(prov){ const k=CFG.keys[prov]; if(!k) throw new Error("AIのキ
 async function listModels(prov){
   const key=needKey(prov);
   if(prov==="gemini"){ const r=await http("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",{"x-goog-api-key":key});
-    return (r.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/.test(m.name)&&!/embedding|image|tts|audio|live|robotics|computer/.test(m.name)).map(m=>m.name.split("/").pop()).sort().reverse(); }
+    return (r.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/.test(m.name)&&!/embedding|image|tts|audio|live|robotics|computer|omni/.test(m.name)).map(m=>m.name.split("/").pop()).sort().reverse(); }
   if(prov==="anthropic"){ const r=await http("https://api.anthropic.com/v1/models?limit=100",{"x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}); return (r.data||[]).map(m=>m.id); }
   const r=await http("https://api.openai.com/v1/models",{"Authorization":"Bearer "+key});
   return (r.data||[]).map(m=>m.id).filter(id=>/^(gpt-|o\d|chatgpt)/.test(id)&&!/audio|realtime|tts|transcribe|image|search|instruct|embedding|codex/.test(id)).sort().reverse();
@@ -616,13 +636,17 @@ async function listModels(prov){
 function recommend(prov,list){
   const pick=(...tests)=>{ for(const t of tests){ const m=list.find(t); if(m) return m; } return list[0]||""; };
   const stable=m=>!/preview|exp|latest|\d{4}-\d{2}-\d{2}|-\d{8}$/.test(m);
-  if(prov==="gemini") return pick(m=>/flash/.test(m)&&!/lite/.test(m)&&stable(m),m=>/flash/.test(m)&&!/lite/.test(m),m=>/flash/.test(m));
+  if(prov==="gemini"){ const ver=m=>{ const x=m.match(/gemini-(\d+(?:\.\d+)?)/); return x?parseFloat(x[1]):0; };
+    const exact=list.filter(m=>/^gemini-\d+(?:\.\d+)?-flash$/.test(m)).sort((a,b)=>ver(b)-ver(a));
+    if(exact.length) return exact[0];
+    return pick(m=>/flash/.test(m)&&!/lite/.test(m)&&stable(m),m=>/flash/.test(m)&&!/lite/.test(m),m=>/flash/.test(m)); }
   if(prov==="anthropic") return pick(m=>/sonnet/.test(m),m=>/opus/.test(m));
   return pick(m=>/^gpt-[\d.]+$/.test(m),m=>/^gpt-[\d.]+-mini$/.test(m),m=>/^gpt-/.test(m)&&stable(m));
 }
 async function currentAI(){
   let prov=CFG.provider&&CFG.keys[CFG.provider]?CFG.provider:(PROVIDERS.find(p=>CFG.keys[p.id])||{}).id;
   if(!prov) throw new Error("AIのキーが入っていません。「設定」でキーを入れてください。");
+  if(prov==="gemini"&&/omni/.test(CFG.models[prov]||"")) CFG.models[prov]=""; // omni系は通常のAPIで使えないため選び直す
   if(!CFG.models[prov]){ const list=modelCache[prov]||(modelCache[prov]=await listModels(prov)); CFG.models[prov]=recommend(prov,list); saveCfg(); }
   if(!CFG.models[prov]) throw new Error("使えるAIの種類が見つかりません。設定の「使うAIを自分で選ぶ」で選んでください。");
   return {provider:prov,model:CFG.models[prov]};
@@ -675,10 +699,10 @@ function renderThumbs(){
 }
 $("thumbs").onclick=e=>{ if(e.target.dataset.rm!==undefined){ picked.splice(+e.target.dataset.rm,1); renderThumbs(); } };
 function extractPrompt(){
-  return "添付は日本の健康診断の報告書（特定健診・後期高齢者健診の結果票、または検査会社の検査報告書）です。印字されている内容を正確に読み取り、次のJSONだけを出力してください。説明文やコードブロック記号は不要です。\n\n"
+  return "添付は日本の健康診断の報告書（特定健診・後期高齢者健診の結果票、検査会社の検査報告書、または問診票）です。印字されている内容を正確に読み取り、次のJSONだけを出力してください。説明文やコードブロック記号は不要です。\n\n"
   +'{"person": {"name": "", "birth_date": "YYYY-MM-DD", "sex": ""},\n "checkups": [{"date": "YYYY-MM-DD", "facility": "",\n   "values": {"項目名": "値"},\n   "findings": {"心電図": "", "自覚症状": "", "既往歴": "", "服薬歴": "", "総合判定": ""}}],\n "new_items": [{"name": "", "unit": "", "ref": "", "group": ""}]}\n\n規則:\n'
   +"- 「今回」「前回」「前々回」の列があれば、列ごとに別の checkups 要素にする（健診年月日を date に）。\n- 和暦や「26年9月2日」のような表記は西暦 YYYY-MM-DD に直す。\n- 値は数値の文字列のみ（* や ** の印、H/L、単位は付けない）。定性検査は (-) や (+) のまま。\n- 「—」や空欄など測定値がない項目は出力しない。推測で値を埋めない。読めない値は出力しない。\n- 血圧は「収縮期血圧」「拡張期血圧」に分ける。\n"
-  +"- 項目名は次の一覧に同じ意味のものがあれば必ずその表記を使う: "+ITEMS().map(i=>i.name).join("、")+"\n- 一覧にない項目で測定値があるものは印字どおりの名前で values に入れ、new_items に単位・基準値・分類を書く。\n- findings は記載があるものだけ。総合判定は本文をそのまま転記する。\n- 住所・電話番号・保険者番号などは出力しない。";
+  +"- 項目名は次の一覧に同じ意味のものがあれば必ずその表記を使う: "+ITEMS().map(i=>i.name).join("、")+"\n- 『ビタミンD』『25(OH)D』『25-OHビタミンD』と書かれていれば、一覧の『25OHビタミンD』の値として出力する（新しい項目にしない）。\n- 一覧にない項目で測定値があるものは印字どおりの名前で values に入れ、new_items に単位・基準値・分類を書く。\n- findings は記載があるものだけ。総合判定は本文をそのまま転記する。\n- 問診の欄がある場合は、書かれている内容をそのまま転記する。治療中・通院中・過去の病気は『既往歴』、飲んでいる薬の名前は『服薬歴』、体の症状と喫煙・飲酒・運動・睡眠などの生活習慣は『自覚症状』に入れる。\n- 心電図の判定・所見が書かれている場合は、心拍数などの数値も含めて『心電図』にそのまま転記する。\n- 問診票だけが写っている画像では、健診日が読み取れればその日付を date にする。\n- 住所・電話番号・保険者番号などは出力しない。";
 }
 function parseExtract(text){
   const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error("AIの読み取り結果を解釈できませんでした。もう一度お試しください。");
@@ -1065,7 +1089,7 @@ const stamp=()=>todayIso().replace(/-/g,"");
 const PROFILE=["id","name","birth_ym","sex","conditions","cond_other","meds","habits","health_done"];
 function exportData(kind){
   const keys=kind==="yearly"?["concern","checkups","consultations"]:["daily","daily_concern","daily_consults"];
-  return {schema:"helthchk_yearly_v3",kind,updated_at:DB.updated_at||now(),custom_items:kind==="yearly"?DB.custom_items:[],
+  return {schema:"helthchk_yearly_v3",kind,updated_at:DB.updated_at||now(),custom_items:kind==="yearly"?DB.custom_items:[],item_edits:kind==="yearly"?DB.item_edits:{},
     people:DB.people.map(p=>Object.fromEntries([...PROFILE,...keys].map(k=>[k,p[k]])))};
 }
 function flushEdits(){ if(dirty) commitDraft(), saveDB(), setDirty(false); if(dayTimer) dayCommit(); }
@@ -1113,6 +1137,7 @@ $("wipeBtn").onclick=()=>{ if(!confirm("この端末に保存した記録、AI�
 function merge(a,b){ // a（手元）を優先しつつ、b にしかないものを足す
   const out=JSON.parse(JSON.stringify(a));
   for(const it of b.custom_items||[]) if(!out.custom_items.some(x=>x.name===it.name)&&!CATALOG.items.some(x=>x.name===it.name)) out.custom_items.push(it);
+  out.item_edits=out.item_edits||{}; for(const [n,e] of Object.entries(b.item_edits||{})) if(!out.item_edits[n]) out.item_edits[n]=e;
   const byTime=(x,y)=>x.created_at<y.created_at?-1:1;
   for(const bp of b.people||[]){
     let ap=out.people.find(p=>p.id===bp.id)||out.people.find(p=>p.name&&p.name===bp.name);
