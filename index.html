@@ -804,7 +804,7 @@ const todayIso=()=>iso(new Date());
 let wk=monday(todayIso()), day=todayIso(), dayTimer=null;
 const blankRec=()=>({m:{},meals:{},habits:[]});
 function recOf(d,create){ const p=person(); if(!p.daily[d]&&create) p.daily[d]=blankRec(); const r=p.daily[d]; if(r){ r.m=r.m||{}; r.meals=r.meals||{}; r.habits=r.habits||[]; } return r; }
-function recEmpty(r){ return !r||(!Object.values(r.m||{}).some(s=>Object.values(s||{}).some(Boolean))&&!Object.values(r.meals||{}).some(s=>Object.values(s||{}).some(Boolean))&&!(r.habits||[]).length&&!["gmax","gmin","pmax","pmin","weight","steps","sport","out","home","memo"].some(k=>r[k])); }
+function recEmpty(r){ return !r||(!Object.values(r.m||{}).some(s=>Object.values(s||{}).some(Boolean))&&!Object.values(r.meals||{}).some(s=>Object.values(s||{}).some(Boolean))&&!(r.habits||[]).length&&!["gmax","gmin","pmax","pmin","bsmax","bsmin","bdmax","bdmin","weight","steps","sport","out","home","memo"].some(k=>r[k])); }
 function renderWeek(){
   const p=person(), days=Array.from({length:7},(_,i)=>addDays(wk,i)), t=todayIso();
   if(!days.includes(day)) day=days.includes(t)?t:wk;
@@ -826,9 +826,13 @@ function renderDayForm(){
       <label>脈拍 <input inputmode="numeric" class="num" data-p="m.${k}.pulse" value="${v(s,"pulse")}"></label>
       <label>血糖値 <input inputmode="numeric" class="num" data-p="m.${k}.glu" value="${v(s,"glu")}"></label>
       <label><select data-p="m.${k}.gt"><option value="">食前・食後</option>${["空腹時","食前","食後"].map(o=>`<option ${s.gt===o?"selected":""}>${o}</option>`).join("")}</select></label></div>`; }
-  h+=`<details ${["gmax","gmin","pmax","pmin"].some(k=>r[k])?"open":""}><summary>腕時計などで1日の最高・最低がわかる方</summary><div class="slot">
+  h+=`<details ${["gmax","gmin","pmax","pmin","bsmax","bsmin","bdmax","bdmin"].some(k=>r[k])?"open":""}><summary>腕時計などで1日の最高・最低がわかる方</summary><div class="slot">
       <label>血糖値 最高 <input inputmode="numeric" class="num" data-p="gmax" value="${v(r,"gmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="gmin" value="${v(r,"gmin")}"></label>
-      <label>脈拍 最高 <input inputmode="numeric" class="num" data-p="pmax" value="${v(r,"pmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="pmin" value="${v(r,"pmin")}"></label></div></details>
+      <label>脈拍 最高 <input inputmode="numeric" class="num" data-p="pmax" value="${v(r,"pmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="pmin" value="${v(r,"pmin")}"></label></div>
+    <div class="slot"><label>血圧 上 最高 <input inputmode="numeric" class="num" data-p="bsmax" value="${v(r,"bsmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="bsmin" value="${v(r,"bsmin")}"></label>
+      <label>下 最高 <input inputmode="numeric" class="num" data-p="bdmax" value="${v(r,"bdmax")}"></label><label>最低 <input inputmode="numeric" class="num" data-p="bdmin" value="${v(r,"bdmin")}"></label></div>
+    <div class="slot noprint"><button class="btn" id="hbBtn" type="button">📷 H Bandの画像から取り込む</button><span class="muted" id="hbState">H Bandの「血糖」「血圧」「心拍」画面のスクリーンショットを選ぶと、AIが日付と最高・最低を読み取り、その日の記録に入れます（複数枚まとめて選べます）。</span></div>
+    <input type="file" id="hbFile" accept="image/*" multiple hidden></details>
   <h3>体重・歩数</h3>
     <div class="slot"><label>体重 <input inputmode="decimal" class="num" data-p="weight" value="${v(r,"weight")}"> kg</label><label>歩数 <input inputmode="numeric" class="num" style="width:5.5rem" data-p="steps" value="${v(r,"steps")}"> 歩</label></div>
   <h3>食事</h3>`;
@@ -840,6 +844,79 @@ function renderDayForm(){
     <div class="slot"><b>家で</b><input type="text" class="grow" data-p="home" value="${v(r,"home")}" placeholder="例：庭の手入れ、掃除、読書"></div>
     <div class="slot"><b>体調</b><input type="text" class="grow" data-p="memo" value="${v(r,"memo")}" placeholder="例：よく眠れた、少し頭が重い"></div></div>`;
   $("dayForm").innerHTML=h;
+  const hbB=$("hbBtn"), hbF=$("hbFile");
+  if(hbB&&hbF){ hbB.onclick=()=>hbF.click(); hbF.onchange=()=>hbImport(hbF); }
+}
+/* ---------- H Band 画像からの取り込み ---------- */
+function hbPrompt(){
+  return "添付画像はスマートウォッチ連携アプリ「H Band」の計測画面のスクリーンショットです。画像内の文字・日付・数値を正確に読み取り、次のJSONだけを出力してください。説明文やコードブロック記号は不要です。\n\n"
+  +'{"record_type":"glucose","date":"YYYY-MM-DD","summary":{"max_val":null,"min_val":null,"avg_val":null,"systolic_max":null,"systolic_min":null,"systolic_avg":null,"diastolic_max":null,"diastolic_min":null,"diastolic_avg":null,"pulse_avg":null},"time_slots":[{"start_time":"HH:MM","end_time":"HH:MM","avg_val":null,"systolic":null,"diastolic":null,"pulse":null}]}\n\n規則:\n'
+  +"- 画面の見出しが「血糖」なら record_type は \"glucose\"、「血圧」なら \"blood_pressure\"、「心拍」なら \"heart_rate\"。\n"
+  +"- 日付は画面上部の日付を YYYY-MM-DD で。年が読み取れない場合は \"MM-DD\" の形で返す。\n"
+  +"- 血糖の画面: summary の max_val・min_val・avg_val に1日の最大・最小・平均を入れる。time_slots は各時間帯の行で、start_time と end_time、その時間帯の平均を avg_val に入れる。\n"
+  +"- 血圧の画面: summary に収縮期（上）の systolic_max・systolic_min・systolic_avg、拡張期（下）の diastolic_max・diastolic_min・diastolic_avg、脈拍の平均 pulse_avg を入れる。time_slots は各測定の行で、start_time に測定時刻、その行の収縮期を systolic、拡張期を diastolic、脈拍があれば pulse に入れる。\n"
+  +"- 心拍の画面: 「心拍数プロファイル」の最大・最小・平均を summary の max_val・min_val・avg_val に入れる。time_slots は各時刻の心拍数を pulse に入れる。\n"
+  +"- 数値は数字だけを書く（単位は付けない）。読めない項目は null にする。推測で値を埋めない。time_slots は時刻の早い順に並べる。";
+}
+function hbParse(text){
+  const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error("AIの読み取り結果を解釈できませんでした。");
+  let d; try{ d=JSON.parse(m[0]); }catch(e){ throw new Error("AIの読み取り結果が壊れていました。"); }
+  let date=String(d.date||"").trim();
+  if(/^\d{2}-\d{2}$/.test(date)) date=`${new Date().getFullYear()}-${date}`;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) date="";
+  const s=d.summary||{}, numOr=v=>{ const n=Number(v); return v==null||v===""||Number.isNaN(n)?null:n; };
+  const slots=(Array.isArray(d.time_slots)?d.time_slots:[]).map(x=>({start_time:String(x.start_time||""),end_time:String(x.end_time||""),avg_val:numOr(x.avg_val),systolic:numOr(x.systolic??x.systolic_avg),diastolic:numOr(x.diastolic??x.diastolic_avg),pulse:numOr(x.pulse)})).filter(x=>/^\d{1,2}:\d{2}$/.test(x.start_time));
+  return {record_type:["glucose","blood_pressure","heart_rate"].includes(d.record_type)?d.record_type:"",date,
+    max_val:numOr(s.max_val),min_val:numOr(s.min_val),avg_val:numOr(s.avg_val),
+    systolic_max:numOr(s.systolic_max),systolic_min:numOr(s.systolic_min),diastolic_max:numOr(s.diastolic_max),diastolic_min:numOr(s.diastolic_min),pulse_avg:numOr(s.pulse_avg),
+    time_slots:slots};
+}
+function hbBandOf(hhmm){ const [h,mi]=hhmm.split(":").map(Number); const m=h*60+mi;
+  if(m>=300&&m<660) return ["am",Math.abs(m-480)]; if(m>=660&&m<960) return ["noon",Math.abs(m-810)];
+  if(m>=960&&m<1260) return ["pm",Math.abs(m-1110)]; const mm=m<300?m+1440:m; return ["bed",Math.abs(mm-1350)]; }
+function hbFillSlots(rec,r){
+  const best={};
+  for(const s of r.time_slots){ const [band,dist]=hbBandOf(s.start_time); if(!best[band]||dist<best[band].dist) best[band]={s,dist}; }
+  for(const [band,{s}] of Object.entries(best)){ const slot=rec.m[band]=rec.m[band]||{};
+    if(s.systolic!=null&&!slot.sys){ slot.sys=String(Math.round(s.systolic)); if(!slot.t) slot.t=s.start_time; }
+    if(s.diastolic!=null&&!slot.dia) slot.dia=String(Math.round(s.diastolic));
+    if(s.pulse!=null&&!slot.pulse){ slot.pulse=String(Math.round(s.pulse)); if(!slot.t) slot.t=s.start_time; }
+    if(r.record_type==="glucose"&&s.avg_val!=null&&!slot.glu){ slot.glu=String(Math.round(s.avg_val)); if(!slot.t) slot.t=s.start_time; } }
+}
+function hbImport(input){
+  guard(async()=>{
+    const files=[...input.files]; input.value=""; if(!files.length) return;
+    const st=$("hbState"), btn=$("hbBtn"); const note=st?st.textContent:"";
+    if(st) st.innerHTML=`<span class="spin"></span>AIが画像を読み取っています…（${files.length}枚）`;
+    if(btn) btn.disabled=true;
+    try{
+      const ai=await currentAI(), results=[];
+      for(const f of files){ const img=await prepare(f); const text=await generate(ai,hbPrompt(),[img]); results.push({...hbParse(text),fname:f.name}); }
+      const ok=results.filter(r=>r.date&&r.record_type), bad=results.length-ok.length;
+      if(!ok.length){ flash("日付や数値を読み取れる画像がありませんでした。H Bandの「血糖」「血圧」「心拍」の画面のスクリーンショットを選んでください。","warn"); return; }
+      const typeName={glucose:"血糖値",blood_pressure:"血圧",heart_rate:"心拍（脈拍）"};
+      const line=r=>{ const a=[];
+        if(r.record_type==="glucose"){ if(r.max_val!=null) a.push(`最高 ${Math.round(r.max_val)}`); if(r.min_val!=null) a.push(`最低 ${Math.round(r.min_val)}`); }
+        if(r.record_type==="heart_rate"){ if(r.max_val!=null) a.push(`最高 ${Math.round(r.max_val)}`); if(r.min_val!=null) a.push(`最低 ${Math.round(r.min_val)}`); }
+        if(r.record_type==="blood_pressure"){ if(r.systolic_max!=null||r.systolic_min!=null) a.push(`上 最高 ${r.systolic_max!=null?Math.round(r.systolic_max):"?"}/最低 ${r.systolic_min!=null?Math.round(r.systolic_min):"?"}`); if(r.diastolic_max!=null||r.diastolic_min!=null) a.push(`下 最高 ${r.diastolic_max!=null?Math.round(r.diastolic_max):"?"}/最低 ${r.diastolic_min!=null?Math.round(r.diastolic_min):"?"}`); }
+        return `<p><label style="font-size:1rem;color:var(--ink)"><input type="checkbox" class="hbCk" value="${results.indexOf(r)}" checked> ${md_(r.date)}（${wd(r.date)}） ${typeName[r.record_type]}: ${a.join("、")||"（数値なし）"}</label></p>`; };
+      dialog(`<h2>H Bandから読み取りました</h2><p class="muted">チェックの付いたものを、それぞれの日付の記録に入れます。同じ項目に値が入っている場合は、読み取った値に置きかわります。AIは読み間違えることがあるので、数字を確認してください。${bad?`<br>※ ${bad}枚は日付や種類を読み取れなかったので除きました。`:""}</p>${ok.map(line).join("")}
+      <p><label style="font-size:1rem;color:var(--ink)"><input type="checkbox" id="hbSlots"> 時間帯に近い測定を「朝・昼・夕・寝る前」の欄にも入れる（空いている欄だけ。腕時計の自動測定なので「食前・食後」は付きません）</label></p>
+      <div class="row"><button class="btn primary" id="hbOk">記録する</button><button class="btn" onclick="dlg.close()">やめる</button></div>`);
+      $("hbOk").onclick=()=>{
+        const chosen=[...document.querySelectorAll(".hbCk")].filter(x=>x.checked).map(x=>results[+x.value]);
+        const fill=$("hbSlots").checked, done=[];
+        const set=(rec,k,v)=>{ if(v!=null) rec[k]=String(Math.round(v)); };
+        for(const r of chosen){ const rec=recOf(r.date,true);
+          if(r.record_type==="glucose"){ set(rec,"gmax",r.max_val); set(rec,"gmin",r.min_val); }
+          if(r.record_type==="heart_rate"){ set(rec,"pmax",r.max_val); set(rec,"pmin",r.min_val); }
+          if(r.record_type==="blood_pressure"){ set(rec,"bsmax",r.systolic_max); set(rec,"bsmin",r.systolic_min); set(rec,"bdmax",r.diastolic_max); set(rec,"bdmin",r.diastolic_min); }
+          if(fill) hbFillSlots(rec,r);
+          done.push(`${md_(r.date)}（${wd(r.date)}）`); }
+        $("dlg").close(); dayCommit(); renderWeek();
+        if(done.length) flash(`H Bandの記録を入れました: ${[...new Set(done)].join("、")}`); };
+    } finally { if(st) st.textContent=note; if(btn) btn.disabled=false; }
+  });
 }
 $("dayForm").addEventListener("input",e=>{
   const path=e.target.dataset.p; if(!path) return; const r=recOf(day,true), ks=path.split("."), val=e.target.value.trim();
@@ -872,6 +949,8 @@ function renderWeekTable(){
   for(const [k,label] of SLOTS) add(`血糖値 ${label}`,d=>{ const s=(R(d).m||{})[k]||{}; return s.glu?{t:s.glu+(s.gt?`<br><small>${esc(s.gt)}</small>`:""),raw:true}:null; });
   add("血糖値 最高/最低",d=>{ const r=R(d); return (r.gmax||r.gmin)?{t:`${r.gmax||"?"}/${r.gmin||"?"}`}:null; });
   add("脈拍 最高/最低",d=>{ const r=R(d); return (r.pmax||r.pmin)?{t:`${r.pmax||"?"}/${r.pmin||"?"}`}:null; });
+  add("血圧 上 最高/最低",d=>{ const r=R(d); return (r.bsmax||r.bsmin)?{t:`${r.bsmax||"?"}/${r.bsmin||"?"}`}:null; });
+  add("血圧 下 最高/最低",d=>{ const r=R(d); return (r.bdmax||r.bdmin)?{t:`${r.bdmax||"?"}/${r.bdmin||"?"}`}:null; });
   add("体重 kg",d=>R(d).weight?{t:R(d).weight}:null); add("歩数",d=>R(d).steps?{t:R(d).steps}:null);
   for(const [k,label] of MEALS) add(label,d=>{ const s=(R(d).meals||{})[k]||{}; return (s.x||s.t)?{t:(s.t?`<small>${esc(s.t)}</small> `:"")+esc(s.x||""),raw:true,wrap:true}:null; });
   for(const [k,label] of [["sport","運動"],["out","外出"],["home","家で"],["memo","体調"]]) add(label,d=>R(d)[k]?{t:R(d)[k],wrap:true}:null);
@@ -943,6 +1022,7 @@ function dailyText(p,nDays){
     if(ms.length) parts.push("測定: "+ms.join("; "));
     if(r.gmax||r.gmin) parts.push(`1日の血糖 最高${r.gmax||"?"}/最低${r.gmin||"?"}`);
     if(r.pmax||r.pmin) parts.push(`1日の脈拍 最高${r.pmax||"?"}/最低${r.pmin||"?"}`);
+    if(r.bsmax||r.bsmin||r.bdmax||r.bdmin) parts.push(`1日の血圧 上 最高${r.bsmax||"?"}/最低${r.bsmin||"?"}、下 最高${r.bdmax||"?"}/最低${r.bdmin||"?"}`);
     if(r.weight) parts.push(`体重${r.weight}kg`); if(r.steps) parts.push(`歩数${r.steps}歩`);
     const me=MEALS.map(([k,label])=>{ const s=(r.meals||{})[k]; return s&&(s.x||s.t)?`${label}${s.t?s.t:""} ${s.x||""}`.trim():""; }).filter(Boolean);
     if(me.length) parts.push("食事: "+me.join("; "));
@@ -1108,7 +1188,7 @@ const cell=v=>{ const t=String(v??""); const n=Number(t); if(t!==""&&!Number.isN
 function tables(){
   const wide=[], long=[["氏名","健診日","年度","分類","検査項目","値","単位","基準値","判定","実施機関"]], hd=["日時","氏名","医師の立場","AI","モデル","気になる点","もとにした記録","回答"], ans=[hd], dans=[hd];
   const dh=["氏名","日付","曜日"]; for(const [,l] of SLOTS) dh.push(`${l} 時刻`,`${l} 血圧上`,`${l} 血圧下`,`${l} 脈拍`,`${l} 血糖値`,`${l} 血糖の時`);
-  dh.push("血糖 最高","血糖 最低","脈拍 最高","脈拍 最低","体重kg","歩数"); for(const [,l] of MEALS) dh.push(`${l} 時刻`,l); dh.push("行った健康習慣","運動","外出","家で","体調");
+  dh.push("血糖 最高","血糖 最低","脈拍 最高","脈拍 最低","血圧上 最高","血圧上 最低","血圧下 最高","血圧下 最低","体重kg","歩数"); for(const [,l] of MEALS) dh.push(`${l} 時刻`,l); dh.push("行った健康習慣","運動","外出","家で","体調");
   const daily=[dh];
   for(const p of DB.people){ const cs=p.checkups;
     wide.push([`■ ${p.name}`,p.birth_ym,p.sex,cell(healthText(p).replace(/\n/g,"　"))]); wide.push(["分類","検査項目","単位","基準値",...cs.map(c=>c.date)]);
@@ -1121,7 +1201,7 @@ function tables(){
     for(const c of p.consultations) ans.push(arow(c)); for(const c of p.daily_consults) dans.push(arow(c));
     for(const d of Object.keys(p.daily).sort()){ const r=p.daily[d]; if(recEmpty(r)) continue; const row=[p.name,d,wd(d)];
       for(const [k] of SLOTS){ const s=(r.m||{})[k]||{}; row.push(s.t||"",cell(s.sys),cell(s.dia),cell(s.pulse),cell(s.glu),s.gt||""); }
-      row.push(cell(r.gmax),cell(r.gmin),cell(r.pmax),cell(r.pmin),cell(r.weight),cell(r.steps));
+      row.push(cell(r.gmax),cell(r.gmin),cell(r.pmax),cell(r.pmin),cell(r.bsmax),cell(r.bsmin),cell(r.bdmax),cell(r.bdmin),cell(r.weight),cell(r.steps));
       for(const [k] of MEALS){ const s=(r.meals||{})[k]||{}; row.push(s.t||"",cell(s.x)); }
       row.push((r.habits||[]).join("、"),cell(r.sport),cell(r.out),cell(r.home),cell(r.memo)); daily.push(row); }
   }
