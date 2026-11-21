@@ -131,6 +131,16 @@ nav button.on{color:var(--accent);background:#fff;border-bottom-color:var(--acce
 .taglist{display:flex;flex-wrap:wrap;gap:.4rem;min-height:2rem;align-items:center}
 .tag{background:var(--accent-soft);color:#0b4f4f;border-radius:8px;padding:.25rem .3rem .25rem .7rem;display:inline-flex;align-items:center;gap:.3rem}
 .tag button{border:0;background:none;color:#0b4f4f;font-size:1.2rem;cursor:pointer;padding:0 .4rem;line-height:1}
+.medrow{display:flex;flex-wrap:wrap;gap:.4rem .8rem;align-items:center;background:var(--accent-soft);border-radius:8px;padding:.45rem .7rem;margin-bottom:.4rem}
+.medrow b{color:#0b4f4f}
+.medrow label{font-size:.85rem;color:var(--sub)}
+.medrow input[type=date]{font-size:.95rem;padding:.2rem .3rem}
+.medrow .x{border:0;background:none;font-size:1.2rem;cursor:pointer;color:#0b4f4f;padding:0 .3rem;line-height:1}
+.symrow{display:flex;flex-wrap:wrap;gap:.3rem .6rem;align-items:center;border:1px solid #d5dde1;border-radius:8px;padding:.45rem .7rem;margin-bottom:.4rem}
+.symrow .st{margin-left:auto;display:inline-flex;gap:.3rem;align-items:center}
+.symrow .stb{border:1.5px solid #8fa3ad;background:#fff;border-radius:2rem;padding:.15rem .7rem;cursor:pointer;min-height:2rem}
+.symrow .stb.on{background:var(--accent-soft);border-color:var(--accent);color:#0b4f4f;font-weight:700}
+.symrow .x{border:0;background:none;font-size:1.2rem;cursor:pointer;padding:0 .3rem;line-height:1}
 #dayStrip{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem;margin-top:.7rem}
 #dayStrip button{border:1.5px solid #8fa3ad;border-radius:10px;background:#fff;color:var(--ink);padding:.35rem 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.3;min-width:0}
 #dayStrip button b{font-size:1.1rem}#dayStrip button span{font-size:.8rem;color:var(--sub)}#dayStrip button i{font-style:normal;color:var(--accent);height:1rem;font-size:.7rem}
@@ -235,11 +245,21 @@ table.plain{border-collapse:collapse}table.plain th{text-align:left;padding:.35r
     <h2>いま、かかっている病気</h2>
     <p class="muted">あてはまるものを押して選びます（もう一度押すと外れます）。</p>
     <div class="chips" id="condChips"></div>
-    <div class="row" style="margin-top:.5rem"><label style="flex:1">そのほかの病気・気になる症状<br><input type="text" id="condOther" style="width:100%" placeholder="例：逆流性食道炎、ひざの痛み"></label></div>
+    <div style="margin-top:1rem">
+      <b>気になる症状の記録</b>
+      <p class="muted">気になる症状を書いて「追加」を押すと、その日の日付で記録されます。前の記録は消えず、あとから「まだある／なくなった」を付けられます。</p>
+      <div class="row">
+        <input type="text" id="symInput" placeholder="例：ひざの痛み、めまい" style="flex:1;min-width:10rem">
+        <button class="btn" id="symAdd">追加</button>
+        <button class="btn" id="symToggle">これまでの症状を見る</button>
+      </div>
+      <div id="symList" style="display:none;margin-top:.5rem"></div>
+    </div>
   </div>
   <div class="card">
     <h2>飲んでいる薬</h2>
-    <div class="taglist" id="medList"></div>
+    <div id="medList"></div>
+    <p class="muted">始めた日・やめた日は、あとからでも入れられます。やめた日が空欄のものは「服用中」として記録されます。</p>
     <div class="row" style="margin-top:.5rem">
       <input type="text" id="medInput" placeholder="薬の名前" style="flex:1;min-width:10rem">
       <button class="btn" id="medAdd">追加</button>
@@ -400,15 +420,20 @@ const toDate=s=>{const a=s.split("-").map(Number);return new Date(a[0],a[1]-1,a[
 const addDays=(s,n)=>{const d=toDate(s);d.setDate(d.getDate()+n);return iso(d)};
 const monday=s=>addDays(s,-((toDate(s).getDay()+6)%7));
 const md_=s=>{const d=toDate(s);return `${d.getMonth()+1}/${d.getDate()}`};
+const fmtD=s=>{const d=toDate(s);return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`};
 const wd=s=>WD[(toDate(s).getDay()+6)%7];
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){flash("この端末に保存できませんでした。ブラウザの保存容量か設定をご確認ください。","err",true);return false}}};
 
 /* ---------- データ ---------- */
-const blankPerson=name=>({id:newId(),name:name||"",birth_ym:"",sex:"男性",conditions:[],cond_other:"",meds:[],habits:[],health_done:false,
+const blankPerson=name=>({id:newId(),name:name||"",birth_ym:"",sex:"男性",conditions:[],cond_other:"",symptoms:[],meds:[],habits:[],health_done:false,
   concern:"",checkups:[],consultations:[],daily:{},daily_concern:"",daily_consults:[]});
 const strs=a=>Array.isArray(a)?[...new Set(a.map(x=>String(x||"").trim()).filter(Boolean))]:[];
+const isDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||"");
+const medListOf=a=>{ const out=[]; for(const m of (Array.isArray(a)?a:[])){ const o=typeof m==="string"?{name:m,start:"",end:""}:(m&&typeof m==="object"?{name:String(m.name||""),start:String(m.start||""),end:String(m.end||"")}:null); if(!o) continue; o.name=o.name.trim(); o.start=isDate(o.start)?o.start:""; o.end=isDate(o.end)?o.end:""; if(o.name&&!out.some(x=>x.name===o.name)) out.push(o); } return out; };
+const symListOf=p=>{ if(Array.isArray(p.symptoms)) return p.symptoms.filter(s=>s&&String(s.text||"").trim()).map(s=>({id:String(s.id||newId()),text:String(s.text).trim(),date:isDate(s.date)?s.date:"",status:s.status==="gone"?"gone":"active"}));
+  const t=String(p.cond_other||"").trim(); return t?[{id:newId(),text:t,date:"",status:"active"}]:[]; };
 const consults=a=>(a||[]).filter(c=>c&&c.answer).map(c=>({...c,id:String(c.id||newId())}));
 function normalize(d){
   if(!d||!Array.isArray(d.people)) return null;
@@ -417,7 +442,7 @@ function normalize(d){
   d.people=d.people.slice(0,MAX_PEOPLE).map(p=>{ const daily={};
     for(const [k,v] of Object.entries(p.daily||{})) if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==="object") daily[k]=v;
     return {id:String(p.id||newId()),name:String(p.name||""),birth_ym:String(p.birth_ym||p.birth_date||"").slice(0,7),sex:String(p.sex||"男性"),
-    conditions:strs(p.conditions),cond_other:String(p.cond_other||""),meds:strs(p.meds),habits:strs(p.habits),health_done:!!p.health_done,
+    conditions:strs(p.conditions),cond_other:"",symptoms:symListOf(p),meds:medListOf(p.meds),habits:strs(p.habits),health_done:!!p.health_done,
     concern:String(p.concern||""),
     checkups:(p.checkups||[]).filter(c=>/^\d{4}-\d{2}-\d{2}$/.test(c.date)).map(c=>({date:c.date,facility:String(c.facility||""),values:{...(c.values||{})},findings:{...(c.findings||{})},notes:String(c.notes||""),source:String(c.source||"")})).sort((a,b)=>a.date<b.date?-1:1),
     consultations:consults(p.consultations),daily,daily_concern:String(p.daily_concern||""),daily_consults:consults(p.daily_consults)}; });
@@ -433,7 +458,7 @@ function saveDB(){ DB.updated_at=now(); store.set(LS_DATA,DB); if(CFG.gas){ CFG.
 const person=()=>DB.people.find(p=>p.id===pid)||DB.people[0];
 const ITEMS=()=>CATALOG.items.map(i=>({...i,...(DB.item_edits[i.name]||{})})).concat(DB.custom_items.map(i=>({...i,custom:true})));
 const itemOf=name=>ITEMS().find(i=>i.name===name);
-const isEmptyPerson=p=>!p.name&&!p.checkups.length&&!p.consultations.length&&!Object.keys(p.daily).length&&!p.daily_consults.length&&!p.meds.length&&!p.conditions.length;
+const isEmptyPerson=p=>!p.name&&!p.checkups.length&&!p.consultations.length&&!Object.keys(p.daily).length&&!p.daily_consults.length&&!p.meds.length&&!p.conditions.length&&!(p.symptoms||[]).length;
 function judge(item,value){
   const t=String(value??"").trim(); if(!t||!item) return "";
   if((item.ref||"").startsWith("(-)")) return ["(-)","-","－","(－)","陰性"].includes(t)?"":"H";
@@ -765,16 +790,27 @@ function renderHealth(){
   const p=person();
   $("condChips").innerHTML=CONDITIONS.map(c=>`<button class="chip ${p.conditions.includes(c)?"on":""}" data-cond="${esc(c)}">${esc(c)}</button>`).join("")
     +p.conditions.filter(c=>!CONDITIONS.includes(c)).map(c=>`<button class="chip on" data-cond="${esc(c)}">${esc(c)}</button>`).join("");
-  if(document.activeElement!==$("condOther")) $("condOther").value=p.cond_other;
   const tags=(list,key)=>list.length?list.map((m,i)=>`<span class="tag">${esc(m)}<button data-rm="${key}" data-i="${i}" aria-label="消す">×</button></span>`).join(""):`<span class="muted">（まだ入っていません）</span>`;
-  $("medList").innerHTML=tags(p.meds,"meds"); $("habitList").innerHTML=tags(p.habits,"habits");
+  $("medList").innerHTML=p.meds.length?p.meds.map((m,i)=>`<div class="medrow"><b>${esc(m.name)}</b><label>始めた日 <input type="date" data-medstart="${i}" value="${m.start}"></label><label>やめた日 <input type="date" data-medend="${i}" value="${m.end}"></label>${m.end?`<span class="pill">終了</span>`:`<span class="pill ok">服用中</span>`}<button class="x" data-rm="meds" data-i="${i}" aria-label="消す">×</button></div>`).join(""):`<span class="muted">（まだ入っていません）</span>`;
+  $("habitList").innerHTML=tags(p.habits,"habits");
+  renderSym();
   $("habitSel").innerHTML=HABITS.filter(h=>!p.habits.includes(h)).map(h=>`<option>${esc(h)}</option>`).join("")+`<option value="__other">そのほか（自分で入力）</option>`;
   $("habitOther").style.display=$("habitSel").value==="__other"?"":"none";
 }
 function healthChanged(){ saveDB(); renderHealth(); renderWeek(); }
 $("condChips").onclick=e=>{ const c=e.target.dataset.cond; if(!c) return; const p=person(); p.conditions=p.conditions.includes(c)?p.conditions.filter(x=>x!==c):[...p.conditions,c]; healthChanged(); };
-$("condOther").oninput=e=>{ person().cond_other=e.target.value; saveDB(); };
-function addMeds(names){ const p=person(); p.meds=strs([...p.meds,...names]); healthChanged(); }
+let symOpen=false;
+function renderSym(){
+  const p=person();
+  $("symToggle").textContent=symOpen?"これまでの症状を閉じる":`これまでの症状を見る（${p.symptoms.length}件）`;
+  $("symList").style.display=symOpen?"":"none";
+  if(!symOpen) return;
+  $("symList").innerHTML=p.symptoms.length?p.symptoms.map((s,i)=>[s,i]).reverse().map(([s,i])=>`<div class="symrow"><span>${s.date?esc(fmtD(s.date))+"　":""}${esc(s.text)}</span><span class="st"><button class="stb ${s.status==="active"?"on":""}" data-symst="${i}" data-v="active">まだある</button><button class="stb ${s.status==="gone"?"on":""}" data-symst="${i}" data-v="gone">なくなった</button><button class="x" data-symrm="${i}" aria-label="消す">×</button></span></div>`).join(""):`<span class="muted">（まだ記録がありません）</span>`;
+}
+$("symAdd").onclick=()=>{ const v=$("symInput").value.trim(); if(!v) return; person().symptoms.push({id:newId(),text:v,date:todayIso(),status:"active"}); $("symInput").value=""; symOpen=true; healthChanged(); };
+$("symInput").onkeydown=e=>{ if(e.key==="Enter") $("symAdd").click(); };
+$("symToggle").onclick=()=>{ symOpen=!symOpen; renderSym(); };
+function addMeds(names){ const p=person(); for(const n of names){ const name=String(n||"").trim(); if(name&&!p.meds.some(m=>m.name===name)) p.meds.push({name,start:"",end:""}); } healthChanged(); }
 $("medAdd").onclick=()=>{ const v=$("medInput").value.trim(); if(v){ addMeds([v]); $("medInput").value=""; } };
 $("medInput").onkeydown=e=>{ if(e.key==="Enter") $("medAdd").click(); };
 $("medPhoto").onclick=()=>$("medFile").click();
@@ -792,11 +828,22 @@ $("medFile").onchange=()=>guard(async()=>{
 });
 $("habitSel").onchange=()=>{ $("habitOther").style.display=$("habitSel").value==="__other"?"":"none"; };
 $("habitAdd").onclick=()=>{ const v=$("habitSel").value==="__other"?$("habitOther").value.trim():$("habitSel").value; if(!v) return; const p=person(); p.habits=strs([...p.habits,v]); $("habitOther").value=""; healthChanged(); };
-document.getElementById("tab-health").addEventListener("click",e=>{ const k=e.target.dataset.rm; if(k){ person()[k].splice(+e.target.dataset.i,1); healthChanged(); } });
-$("healthSave").onclick=()=>{ const p=person(); p.cond_other=$("condOther").value.trim(); p.health_done=true; saveDB(); renderGuide(); flash("健康状態を保存しました。"); };
+document.getElementById("tab-health").addEventListener("click",e=>{
+  const k=e.target.dataset.rm; if(k){ person()[k].splice(+e.target.dataset.i,1); healthChanged(); return; }
+  const si=e.target.dataset.symst; if(si!==undefined){ person().symptoms[+si].status=e.target.dataset.v; healthChanged(); return; }
+  const ri=e.target.dataset.symrm; if(ri!==undefined){ person().symptoms.splice(+ri,1); healthChanged(); }
+});
+document.getElementById("tab-health").addEventListener("change",e=>{
+  const p=person(), s=e.target.dataset.medstart, en=e.target.dataset.medend;
+  if(s!==undefined&&p.meds[+s]){ p.meds[+s].start=e.target.value; saveDB(); renderHealth(); }
+  if(en!==undefined&&p.meds[+en]){ p.meds[+en].end=e.target.value; saveDB(); renderHealth(); }
+});
+$("healthSave").onclick=()=>{ const p=person(); p.health_done=true; saveDB(); renderGuide(); flash("健康状態を保存しました。"); };
 function healthText(p){
-  const cond=[...p.conditions,...(p.cond_other?[p.cond_other]:[])];
-  return `【現在かかっている病気】${cond.length?cond.join("、"):"（申告なし）"}\n【飲んでいる薬】${p.meds.length?p.meds.join("、"):"（申告なし）"}\n【健康のために行っていること】${p.habits.length?p.habits.join("、"):"（申告なし）"}`;
+  const sym=(p.symptoms||[]).map(s=>s.status==="gone"?`${s.text}（なくなった）`:s.text);
+  const cond=[...p.conditions,...sym];
+  const meds=(p.meds||[]).map(m=>m.start||m.end?`${m.name}（${m.start?fmtD(m.start):"開始日不明"}〜${m.end?fmtD(m.end):"服用中"}）`:m.name);
+  return `【現在かかっている病気】${cond.length?cond.join("、"):"（申告なし）"}\n【飲んでいる薬】${meds.length?meds.join("、"):"（申告なし）"}\n【健康のために行っていること】${p.habits.length?p.habits.join("、"):"（申告なし）"}`;
 }
 
 /* ---------- 毎日の健康記録 ---------- */
@@ -1166,7 +1213,7 @@ $("keyRows").onclick=async e=>{
 /* ---------- 控え（特定健診データ／日常健康データを別ファイルで） ---------- */
 function download(name,text,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
 const stamp=()=>todayIso().replace(/-/g,"");
-const PROFILE=["id","name","birth_ym","sex","conditions","cond_other","meds","habits","health_done"];
+const PROFILE=["id","name","birth_ym","sex","conditions","cond_other","symptoms","meds","habits","health_done"];
 function exportData(kind){
   const keys=kind==="yearly"?["concern","checkups","consultations"]:["daily","daily_concern","daily_consults"];
   return {schema:"helthchk_yearly_v3",kind,updated_at:DB.updated_at||now(),custom_items:kind==="yearly"?DB.custom_items:[],item_edits:kind==="yearly"?DB.item_edits:{},
@@ -1227,7 +1274,7 @@ function merge(a,b){ // a（手元）を優先しつつ、b にしかないも�
     for(const k of ["consultations","daily_consults"]){ for(const c of bp[k]) if(!ap[k].some(x=>x.id===c.id)) ap[k].push(c); ap[k].sort(byTime); }
     for(const [d,r] of Object.entries(bp.daily)) if(!ap.daily[d]) ap.daily[d]=r;
     for(const k of ["birth_ym","concern","daily_concern","cond_other"]) if(!ap[k]) ap[k]=bp[k];
-    for(const k of ["conditions","meds","habits"]) if(!ap[k].length) ap[k]=bp[k];
+    for(const k of ["conditions","meds","habits","symptoms"]) if(!ap[k].length) ap[k]=bp[k];
     ap.health_done=ap.health_done||bp.health_done;
   }
   return normalize(out);
